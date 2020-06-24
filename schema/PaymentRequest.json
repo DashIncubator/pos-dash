@@ -1,0 +1,91 @@
+{
+    "PaymentRequest": {
+        "indices": [
+            {
+                "unique": false,
+                "properties": [
+                    {
+                        "requesterUserId": "asc"
+                    }
+                ]
+            },
+            {
+                "unique": false,
+                "properties": [
+                    {
+                        "requesteeUserId": "asc"
+                    }
+                ]
+            },
+            {
+                "unique": true,
+                "properties": [
+                    {
+                        "timestamp": "desc"
+                    }
+                ]
+            }
+        ],
+        "required": [
+            "requesterUserId",
+            "requesterUserName",
+            "requesteeUserId",
+            "requesteeUserName",
+            "encAddress",
+            "encSatoshis",
+            "timestamp"
+        ],
+        "properties": {
+            "requesterUserId": {
+                "type": "string",
+                "minLength": 42,
+                "maxLength": 44,
+                "pattern": "^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$"
+            },
+            "requesterUserName": {
+                "type": "string",
+                "maxLength": 62,
+                "pattern": "^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9])$"
+            },
+            "requesteeUserId": {
+                "type": "string",
+                "minLength": 42,
+                "maxLength": 44,
+                "pattern": "^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$"
+            },
+            "requesteeUserName": {
+                "type": "string",
+                "maxLength": 62,
+                "pattern": "^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9])$"
+            },
+            "contractId": {
+                "type": "string",
+                "minLength": 42,
+                "maxLength": 44,
+                "pattern": "^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$"
+            },
+            "refId":{
+                "type": "string"
+            },
+            "memo": {
+                "type": "string"
+            },
+            "encAddress": {
+                "type": "string"
+            },
+            "encSatoshis": {
+                "type": "string"
+            },
+            "encFiatSymbol": {
+                "type": "string"
+            },
+            "encFiatAmount": {
+                "type": "string"
+            },
+            "timestamp": {
+                "type": "integer"
+            }
+        },
+        "additionalProperties": false
+    }
+}

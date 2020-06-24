@@ -12,6 +12,22 @@
           </tr>
         </thead>
         <tbody>
+          <tr v-for="(transaction, idx) in transactions" :key="idx">
+            <td>
+              <timeago
+                class="subtitle-1"
+                :datetime="date(transaction.data.timestamp)"
+                :auto-update="60"
+              />
+            </td>
+            <td>{{ transaction.data.requesterUserName }}</td>
+            <td>
+              {{ transaction.data.encFiatAmount }}
+              {{ transaction.data.encFiatSymbol }}
+            </td>
+            <td>{{ status(idx) }}</td>
+            <td>Amend, Cancel</td>
+          </tr>
           <tr>
             <td>Feb 12th, 5:15pm</td>
             <td>Alice</td>
@@ -52,8 +68,41 @@
 
 <script lang="ts">
 import Vue from 'vue'
+import { mapActions } from 'vuex'
 
-export default Vue.extend({})
+export default Vue.extend({
+  data() {
+    return {
+      transactions: [],
+    }
+  },
+  async mounted() {
+    const { fetchTransactions } = this
+    this.transactions = await fetchTransactions()
+  },
+  methods: {
+    ...mapActions(['fetchTransactions']),
+    date(timestamp: number) {
+      return new Date(timestamp * 1000)
+    },
+    amountPaid(idx) {
+      const tx = this.transactions[idx]
+      const total = tx.utxos.items.reduce((acc, val) => {
+        return acc + val.satoshis
+      }, 0)
+      return total
+    },
+    status(idx) {
+      const { amountPaid, transactions } = this
+      const tx = transactions[idx]
+      if (tx.data.encSatoshis === amountPaid(idx).toString()) {
+        return 'Paid'
+      } else {
+        return 'Pending'
+      }
+    },
+  },
+})
 </script>
 
 <style scoped></style>

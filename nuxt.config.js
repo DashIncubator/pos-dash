@@ -47,7 +47,7 @@ export default {
    ** Plugins to load before mounting the App
    ** https://nuxtjs.org/guide/plugins
    */
-  plugins: [],
+  plugins: [{ src: '~/plugins/timeago.js' }],
   /*
    ** Nuxt.js dev-modules
    */
@@ -95,6 +95,7 @@ export default {
       if (ctx.isDev) {
         config.devtool = ctx.isClient ? 'source-map' : 'inline-source-map'
       }
+      config.node = { fs: 'empty' }
     },
   },
 }
