@@ -26,7 +26,11 @@
               {{ transaction.data.encFiatSymbol }}
             </td>
             <td>{{ status(idx) }}</td>
-            <td>Amend, Cancel</td>
+            <td>
+              <span v-for="(option, idy) in options(idx)" :key="idy">{{
+                `${option}, `
+              }}</span>
+            </td>
           </tr>
           <tr>
             <td>Feb 12th, 5:15pm</td>
@@ -85,20 +89,32 @@ export default Vue.extend({
     date(timestamp: number) {
       return new Date(timestamp * 1000)
     },
-    amountPaid(idx) {
-      const tx = this.transactions[idx]
-      const total = tx.utxos.items.reduce((acc, val) => {
+    amountPaid(idx: number) {
+      const tx: any = this.transactions[idx]
+      const total = tx.utxos.items.reduce((acc: number, val: any) => {
         return acc + val.satoshis
       }, 0)
       return total
     },
-    status(idx) {
+    status(idx: number) {
       const { amountPaid, transactions } = this
-      const tx = transactions[idx]
+      const tx: any = transactions[idx]
       if (tx.data.encSatoshis === amountPaid(idx).toString()) {
         return 'Paid'
       } else {
         return 'Pending'
+      }
+    },
+    options(idx: number) {
+      const status = this.status(idx) // should be a computed
+      if (status === 'Pending') {
+        return ['Amend', 'Cancel']
+      }
+      if (status === 'Paid') {
+        return ['Refund', 'Amend']
+      }
+      if (status === 'Cancelled') {
+        return ['']
       }
     },
   },
