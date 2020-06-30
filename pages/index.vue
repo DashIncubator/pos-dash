@@ -1,5 +1,6 @@
 <template>
   <div>
+    <v-btn color="success" nuxt to="/charge">New Sale</v-btn>
     <v-simple-table>
       <template v-slot:default>
         <thead>
@@ -20,16 +21,24 @@
                 :auto-update="60"
               />
             </td>
-            <td>{{ transaction.data.requesterUserName }}</td>
+            <td>{{ transaction.data.requesteeUserName }}</td>
             <td>
               {{ transaction.data.encFiatAmount }}
               {{ transaction.data.encFiatSymbol }}
             </td>
             <td>{{ status(idx) }}</td>
             <td>
-              <span v-for="(option, idy) in options(idx)" :key="idy">{{
-                `${option}, `
-              }}</span>
+              <v-btn
+                v-for="(option, idy) in options(idx)"
+                :key="idy"
+                text
+                small
+                dense
+                color="blue"
+                @click="execOption(option, idx)"
+              >
+                {{ option }}
+              </v-btn>
             </td>
           </tr>
           <tr>
@@ -85,7 +94,7 @@ export default Vue.extend({
     this.transactions = await fetchTransactions()
   },
   methods: {
-    ...mapActions(['fetchTransactions']),
+    ...mapActions(['fetchTransactions', 'refundTx']),
     date(timestamp: number) {
       return new Date(timestamp * 1000)
     },
@@ -115,6 +124,35 @@ export default Vue.extend({
       }
       if (status === 'Cancelled') {
         return ['']
+      }
+    },
+    execOption(option: any, idx: number) {
+      if (option === 'Refund') {
+        this.refundTx({
+          // @ts-ignore
+          refundTxId: this.transactions[idx].utxos.items[0].txid,
+          // @ts-ignore
+          satoshis: parseInt(this.transactions[idx].data.encSatoshis),
+        })
+      }
+      if (option === 'Amend') {
+        // @ts-ignore
+        const refId = this.transactions[idx].id
+        // @ts-ignore
+        const requesteeUserName = this.transactions[idx].data.requesteeUserName
+        // @ts-ignore
+        const requesteeUserId = this.transactions[idx].data.requesteeUserId
+        // @ts-ignore
+        const fiatAmount = this.transactions[idx].data.encFiatAmount
+        const POSOpts = {
+          refId,
+          requesteeUserId,
+          requesteeUserName,
+          fiatAmount,
+          mode: option,
+        }
+        this.$store.commit('setPOSOptions', POSOpts)
+        this.$router.push('/charge')
       }
     },
   },

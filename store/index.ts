@@ -24,7 +24,14 @@ const getInitState = () => ({
   clientErrorMsg: '',
   isClientWalletSynced: false,
   snackbar: { show: false, color: 'red', text: '', timestamp: 0 },
-  pos: { currency: 'USD' },
+  pos: {
+    currency: 'USD',
+    requesteeUserId: '',
+    requesteeUserName: '',
+    refId: '',
+    fiatAmount: 0,
+    mode: 'newSale',
+  },
 })
 
 export const state = () => getInitState()
@@ -36,6 +43,21 @@ export const getters: GetterTree<RootState, RootState> = {
 }
 
 export const mutations: MutationTree<RootState> = {
+  setPOSOptions: (state, POSOpts) => {
+    // state.pos.currency =
+    state.pos.requesteeUserId = POSOpts.requesteeUserId
+    state.pos.requesteeUserName = POSOpts.requesteeUserName
+    state.pos.refId = POSOpts.refId
+    state.pos.fiatAmount = POSOpts.fiatAmount
+    state.pos.mode = POSOpts.mode
+  },
+  resetPOSOptions: (state) => {
+    // state.pos.currency =
+    state.pos.requesteeUserId = ''
+    state.pos.requesteeUserName = ''
+    state.pos.refId = ''
+    state.pos.fiatAmount = 0
+  },
   setClientWalletSynced: (state, isSynced) => {
     state.isClientWalletSynced = isSynced
   },
@@ -118,7 +140,48 @@ export const actions: ActionTree<RootState, RootState> = {
       console.error('Something went wrong:', e)
     }
   },
+  async refundTx({ commit }, { refundTxId, satoshis }) {
+    const account = await client.wallet.getAccount()
+    try {
+      // @ts-ignore
+      const DAPIclient = client.getDAPIClient()
+      const refundTx = await DAPIclient.getTransaction(refundTxId)
+      console.log('refundTx :>> ', refundTx)
+      console.log('tx.toJSON() :>> ', refundTx.toJSON())
 
+      const dashcoreTx = new dashcore.Transaction(refundTx)
+      console.log('dashcoreTx :>> ', dashcoreTx)
+
+      const hash = dashcore.crypto.Hash.sha256ripemd160(
+        dashcoreTx.inputs[0].script.chunks[0].buf
+      )
+
+      const refundAddress = new dashcore.Address(hash, 'testnet').toString()
+      console.log('refundAddress :>> ', refundAddress)
+      console.log('satoshis :>> ', satoshis)
+      console.log('typeof satoshis :>> ', typeof satoshis)
+      console.log('balance', account.getTotalBalance())
+      const transaction = account.createTransaction({
+        recipient: refundAddress,
+        satoshis,
+        deductFee: false,
+      })
+      console.log('transaction :>> ', transaction)
+
+      const result = await account.broadcastTransaction(transaction)
+      console.log('Transaction broadcast!\nTransaction ID:', result)
+      commit('showSnackbar', {
+        text: 'Payment sent\n' + result,
+        color: 'green',
+      })
+      // dispatch('refreshWallet')
+    } catch (e) {
+      commit('showSnackbar', {
+        text: e.message,
+      })
+      throw e
+    }
+  },
   async submitDocument(
     { commit, dispatch, state },
     { contract, typeLocator, document }
@@ -278,7 +341,7 @@ export const actions: ActionTree<RootState, RootState> = {
     return transactionsWithUTXOs
   },
   async queryDocuments(
-    { dispatch },
+    { commit },
     {
       contract,
       typeLocator,
@@ -300,7 +363,7 @@ export const actions: ActionTree<RootState, RootState> = {
       console.log('Query result:', { documents })
       return documents
     } catch (e) {
-      dispatch('showSnackbar', { text: e, color: 'red' })
+      commit('showSnackbar', { text: e, color: 'red' })
       console.error('Something went wrong:', e)
     } finally {
       // commit('setSyncing', false)

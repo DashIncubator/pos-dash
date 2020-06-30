@@ -1,7 +1,14 @@
 <template>
   <div>
+    <v-alert v-if="mode === 'Amend'" color="blue" outlined=""
+      >Amending Request: {{ refId }}</v-alert
+    >
+    <v-alert v-if="mode === 'newSale'" color="green" outlined=""
+      >New Sale</v-alert
+    >
     <p>Customer name:</p>
-    <NameAutocomplete v-model="customer" />
+    <p v-if="mode === 'Amend'">{{ customer.split(':')[0] }}</p>
+    <NameAutocomplete v-if="mode === 'newSale'" v-model="customer" />
     <v-overflow-btn
       v-model="fiatSymbol"
       :items="[
@@ -186,7 +193,10 @@
       type="number"
     ></v-text-field>
     <v-btn color="success" @click="reqPayment">Confirm</v-btn>
-    <v-btn color="error">Cancel</v-btn>
+    <v-btn color="error" nuxt to="/">Cancel</v-btn>
+    <v-overlay :value="waitingForPayment">
+      <v-card>Waiting for payment</v-card>
+    </v-overlay>
   </div>
 </template>
 
@@ -201,9 +211,12 @@ export default Vue.extend({
   components: { NameAutocomplete },
   data() {
     return {
+      mode: 'newSale',
       memo: '',
       fiatAmount: 0,
+      refId: '',
       customer: null,
+      waitingForPayment: false,
     }
   },
   computed: {
@@ -218,11 +231,27 @@ export default Vue.extend({
       },
     },
   },
+  created() {
+    // @ts-ignore
+    this.mode = this.$store.state.pos.mode
+    // @ts-ignore
+    this.customer = `${this.$store.state.pos.requesteeUserName}:${this.$store.state.pos.requesteeUserId}`
+    // @ts-ignore
+    this.fiatAmount = this.$store.state.pos.fiatAmount
+    // @ts-ignore
+    this.refId = this.$store.state.pos.refId
+    // @ts-ignore
+    console.log(this.customer, this.fiatAmount, this.refId)
+    this.$store.commit('resetPOSOpts')
+  },
   methods: {
     ...mapActions(['requestFiat']),
     reqPayment() {
       // @ts-ignore
-      const { customer, fiatAmount, fiatSymbol, memo, requestFiat } = this
+      this.waitingForPayment = true
+      // @ts-ignore
+      // eslint-disable-next-line prettier/prettier
+      const { customer, fiatAmount, fiatSymbol, memo, refId, requestFiat } = this
       console.log('fiatAmount :>> ', fiatAmount)
       console.log('fiatSymbol :>> ', fiatSymbol)
       console.log('memo :>> ', memo)
@@ -233,6 +262,7 @@ export default Vue.extend({
         requesteeUserName,
         fiatAmount,
         fiatSymbol,
+        refId,
         memo,
       })
     },

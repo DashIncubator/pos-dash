@@ -3,7 +3,8 @@
     <v-main>
       <v-container>
         <nuxt />
-        <v-overlay :value="!this.$store.state.isClientWalletSynced">
+        <!-- <v-overlay :value="!this.$store.state.isClientWalletSynced"> -->
+        <v-overlay :value="false">
           <v-progress-circular indeterminate size="64"></v-progress-circular>
         </v-overlay>
         <v-overlay :value="this.$store.state.isClientError">

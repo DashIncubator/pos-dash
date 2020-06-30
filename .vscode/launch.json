@@ -6,7 +6,7 @@
             "request": "launch",
             "name": "client: chrome",
             // "url": "http://localhost:3000/#/charge",
-            "url": "http://localhost:3000/#/history",
+            "url": "http://localhost:3000/#/",
             "webRoot": "${workspaceFolder}",
             "sourceMapPathOverrides": {
                 "webpack:///*": "${workspaceRoot}/*"
