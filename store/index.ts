@@ -105,7 +105,7 @@ export const actions: ActionTree<RootState, RootState> = {
       },
       apps: {
         PaymentRequest: {
-          contractId: '7T45wAqZHMvV6ay8pdebWWBMoGYNo9cvJtCXyt5vxakE',
+          contractId: '3Pd2SFbAqDF9G2RjcYmzbQuGEJ6xqF11ufEKpQEKNKxE',
         },
       },
     })

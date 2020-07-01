@@ -1,4 +1,71 @@
 {
+    "PaymentIntent": {
+        "indices": [
+            {
+                "unique": false,
+                "properties": [
+                    {
+                        "requesterUserId": "asc"
+                    }
+                ]
+            },
+            {
+                "unique": false,
+                "properties": [
+                    {
+                        "requesteeUserId": "asc"
+                    }
+                ]
+            },
+            {
+                "unique": false,
+                "properties": [
+                    {
+                        "timestamp": "desc"
+                    }
+                ]
+            }
+        ],
+        "required": [
+            "requesterUserId",
+            "requesterUserName",
+            "requesteeUserId",
+            "requesteeUserName",
+            "encRefundAddress",
+            "timestamp"
+        ],
+        "properties": {
+            "requesterUserId": {
+                "type": "string",
+                "minLength": 42,
+                "maxLength": 44,
+                "pattern": "^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$"
+            },
+            "requesterUserName": {
+                "type": "string",
+                "maxLength": 62,
+                "pattern": "^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9])$"
+            },
+            "requesteeUserId": {
+                "type": "string",
+                "minLength": 42,
+                "maxLength": 44,
+                "pattern": "^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$"
+            },
+            "requesteeUserName": {
+                "type": "string",
+                "maxLength": 62,
+                "pattern": "^((?!-)[a-zA-Z0-9-]{0,62}[a-zA-Z0-9])$"
+            },
+            "encRefundAddress": {
+                "type": "string"
+            },
+            "timestamp": {
+                "type": "integer"
+            }
+        },
+        "additionalProperties": false
+    },
     "PaymentRequest": {
         "indices": [
             {
@@ -18,7 +85,7 @@
                 ]
             },
             {
-                "unique": true,
+                "unique": false,
                 "properties": [
                     {
                         "timestamp": "desc"
@@ -64,7 +131,7 @@
                 "maxLength": 44,
                 "pattern": "^[123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz]+$"
             },
-            "refId":{
+            "refId": {
                 "type": "string"
             },
             "memo": {
