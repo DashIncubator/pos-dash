@@ -199,7 +199,47 @@
     <v-btn color="success" @click="reqPayment">Confirm</v-btn>
     <v-btn color="error" nuxt to="/">Cancel</v-btn>
     <v-overlay :value="waitingForPayment">
-      <v-card>Waiting for payment</v-card>
+      <!-- <v-overlay> -->
+      <v-card
+        ><v-card-title>Waiting for payment</v-card-title>
+        <svg
+          v-if="!isPaid"
+          class="checkspace"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 52 52"
+        />
+        <svg
+          v-if="isPaid"
+          class="checkmark"
+          xmlns="http://www.w3.org/2000/svg"
+          viewBox="0 0 52 52"
+        >
+          <circle
+            class="checkmark__circle"
+            cx="26"
+            cy="26"
+            r="25"
+            fill="none"
+          />
+          <path
+            class="checkmark__check"
+            fill="none"
+            d="M14.1 27.2l7.1 7.2 16.7-16.8"
+          />
+        </svg>
+        <v-card-text class="text-center"
+          >Received {{ satoshisReceived }} /
+          {{ satoshisRequested }}</v-card-text
+        >
+        <v-card-actions>
+          <v-btn v-if="!isPaid" class="mx-auto" nuxt to="/" color="red"
+            >Cancel</v-btn
+          >
+          <v-btn v-if="isPaid" class="mx-auto" nuxt to="/" color="green"
+            >Done</v-btn
+          >
+        </v-card-actions>
+      </v-card>
     </v-overlay>
   </div>
 </template>
@@ -210,6 +250,7 @@ import { mapActions } from 'vuex'
 // @ts-ignore
 import NameAutocomplete from '../components/NameAutocomplete'
 // const timestamp = () => Math.floor(Date.now() / 1000)
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export default Vue.extend({
   components: { NameAutocomplete },
@@ -221,6 +262,9 @@ export default Vue.extend({
       refId: '',
       customer: null,
       waitingForPayment: false,
+      satoshisReceived: 0,
+      satoshisRequested: -1,
+      isPaid: false,
     }
   },
   computed: {
@@ -249,8 +293,29 @@ export default Vue.extend({
     this.$store.commit('resetPOSOptions')
   },
   methods: {
-    ...mapActions(['requestFiat']),
-    reqPayment() {
+    ...mapActions(['requestFiat', 'getUTXO', 'getAddressSummary']),
+    async pollWaitForPayment(document) {
+      console.log('document :>> ', document)
+      this.satoshisRequested = document.encSatoshis
+      // console.log(
+      //   'this.getUTXO(document.encAddress) :>> ',
+      //   await this.getUTXO(document.encAddress)
+      // )
+      const summary = await this.getAddressSummary(document.encAddress)
+
+      this.satoshisReceived = summary.unconfirmedBalanceSat
+      if (this.satoshisReceived >= document.encSatoshis) {
+        this.isPaid = true
+        setTimeout(() => {
+          this.waitingForPayment = false
+          this.$router.push('/')
+        }, 5000)
+      } else {
+        await sleep(2000)
+        this.pollWaitForPayment(document)
+      }
+    },
+    async reqPayment() {
       // @ts-ignore
       this.waitingForPayment = true
       // @ts-ignore
@@ -261,7 +326,7 @@ export default Vue.extend({
       console.log('memo :>> ', memo)
       console.log('customer :>> ', customer)
       const [requesteeUserName, requesteeUserId] = customer.split(':')
-      requestFiat({
+      const document = await requestFiat({
         requesteeUserId,
         requesteeUserName,
         fiatAmount,
@@ -269,9 +334,72 @@ export default Vue.extend({
         refId,
         memo,
       })
+      console.log('request fiat document :>> ', document)
+      console.log('request fiat address :>> ', document.encAddress)
+      this.pollWaitForPayment(document)
     },
   },
 })
 </script>
 
-<style scoped></style>
+<style scoped>
+.checkmark__circle {
+  stroke-dasharray: 166;
+  stroke-dashoffset: 166;
+  stroke-width: 2;
+  stroke-miterlimit: 10;
+  stroke: #7ac142;
+  fill: none;
+  animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
+}
+
+.checkspace {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: block;
+  stroke-width: 2;
+  margin: 10% auto;
+  box-shadow: inset 0px 0px 0px 30px blue;
+}
+.checkmark {
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  display: block;
+  stroke-width: 2;
+  stroke: #fff;
+  stroke-miterlimit: 10;
+  margin: 10% auto;
+  box-shadow: inset 0px 0px 0px #7ac142;
+  animation: fill 0.4s ease-in-out 0.4s forwards,
+    scale 0.3s ease-in-out 0.9s both;
+}
+
+.checkmark__check {
+  transform-origin: 50% 50%;
+  stroke-dasharray: 48;
+  stroke-dashoffset: 48;
+  animation: stroke 0.3s cubic-bezier(0.65, 0, 0.45, 1) 0.8s forwards;
+}
+
+@keyframes stroke {
+  100% {
+    stroke-dashoffset: 0;
+  }
+}
+@keyframes scale {
+  0%,
+  100% {
+    transform: none;
+  }
+  50% {
+    transform: scale3d(1.1, 1.1, 1);
+  }
+}
+@keyframes fill {
+  100% {
+    box-shadow: inset 0px 0px 0px 30px #7ac142;
+  }
+}
+</style>

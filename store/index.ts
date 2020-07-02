@@ -256,7 +256,7 @@ export const actions: ActionTree<RootState, RootState> = {
     console.log('dashAmount :>> ', dashAmount)
 
     const satoshis = Unit.fromBTC(dashAmount).toSatoshis()
-    await dispatch('requestPayment', {
+    const document = await dispatch('requestPayment', {
       requesteeUserId,
       requesteeUserName,
       satoshis,
@@ -265,6 +265,7 @@ export const actions: ActionTree<RootState, RootState> = {
       memo,
       refId,
     })
+    return document
   },
   async requestPayment(
     { state, dispatch },
@@ -317,6 +318,7 @@ export const actions: ActionTree<RootState, RootState> = {
       typeLocator: 'PaymentRequest',
       document,
     })
+    return document
   },
   async fetchTransactions({ dispatch }) {
     // TODO cache & paginate using timestamp
@@ -377,5 +379,19 @@ export const actions: ActionTree<RootState, RootState> = {
     } finally {
       // commit('setSyncing', false)
     }
+  },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async getUTXO({ state }, address: string) {
+    // @ts-ignore
+    const DAPIclient = await client.getDAPIClient()
+    const UTXO = await DAPIclient.getUTXO(address)
+    return UTXO
+  },
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  async getAddressSummary({ state }, address: string) {
+    // @ts-ignore
+    const DAPIclient = await client.getDAPIClient()
+    const summary = await DAPIclient.getAddressSummary(address)
+    return summary
   },
 }

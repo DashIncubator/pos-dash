@@ -29,8 +29,8 @@
         <v-btn text color="red" @click="dismissIntent(intent.$id)"
           >Dismiss</v-btn
         >
-      </template> </v-banner
-    >{{ paymentIntentsVisible }}
+      </template>
+    </v-banner>
   </div>
 </template>
 
@@ -98,6 +98,8 @@ export default Vue.extend({
       this.$router.push('/charge')
     },
     async pollPaymentIntents() {
+      if (this.$router.currentRoute.path !== '/') return
+
       const queryOpts = {
         limit: 10,
         startAt: 1,
