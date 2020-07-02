@@ -32,6 +32,7 @@ const getInitState = () => ({
     fiatAmount: 0,
     mode: 'newSale',
   },
+  paymentIntentsVisible: {},
 })
 
 export const state = () => getInitState()
@@ -43,6 +44,9 @@ export const getters: GetterTree<RootState, RootState> = {
 }
 
 export const mutations: MutationTree<RootState> = {
+  dismissPaymentIntent: (state, docId: string) => {
+    state.paymentIntentsVisible[docId] = false
+  },
   setPOSOptions: (state, POSOpts) => {
     // state.pos.currency =
     state.pos.requesteeUserId = POSOpts.requesteeUserId
@@ -57,6 +61,7 @@ export const mutations: MutationTree<RootState> = {
     state.pos.requesteeUserName = ''
     state.pos.refId = ''
     state.pos.fiatAmount = 0
+    state.pos.mode = 'newSale'
   },
   setClientWalletSynced: (state, isSynced) => {
     state.isClientWalletSynced = isSynced

@@ -3,11 +3,15 @@
     <v-alert v-if="mode === 'Amend'" color="blue" outlined=""
       >Amending Request: {{ refId }}</v-alert
     >
+    <v-alert v-if="mode === 'Intent'" color="green" outlined=""
+      >New Sale for Intent: {{ refId }}</v-alert
+    >
     <v-alert v-if="mode === 'newSale'" color="green" outlined=""
       >New Sale</v-alert
     >
     <p>Customer name:</p>
     <p v-if="mode === 'Amend'">{{ customer.split(':')[0] }}</p>
+    <p v-if="mode === 'Intent'">{{ customer.split(':')[0] }}</p>
     <NameAutocomplete v-if="mode === 'newSale'" v-model="customer" />
     <v-overflow-btn
       v-model="fiatSymbol"
@@ -242,7 +246,7 @@ export default Vue.extend({
     this.refId = this.$store.state.pos.refId
     // @ts-ignore
     console.log(this.customer, this.fiatAmount, this.refId)
-    this.$store.commit('resetPOSOpts')
+    this.$store.commit('resetPOSOptions')
   },
   methods: {
     ...mapActions(['requestFiat']),

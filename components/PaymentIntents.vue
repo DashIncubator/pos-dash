@@ -3,7 +3,7 @@
     <v-banner
       v-for="(intent, idx) in freshPaymentIntents"
       :key="idx"
-      v-model="v0"
+      :value="paymentIntentsVisible[intent.$id]"
       sticky
       single-line
       outlined=""
@@ -14,45 +14,54 @@
           mdi-account
         </v-icon>
       </v-avatar>
-      <b> {{ intent.requesteeUserName }} </b> is ready to pay.
-      <template v-slot:actions="{ dismiss }">
+      <b>
+        {{ intent.requesteeUserName }}
+        {{ intent.$id.slice(-4) }}
+      </b>
+      is ready to pay.
+      <template v-slot:actions>
         <v-btn
           dark
           color="green"
           @click="requestFromUserId(intent.requesteeUserId)"
           >Request Money</v-btn
         >
-        <v-btn text color="red" @click="dismiss">Dismiss</v-btn>
-      </template>
-    </v-banner>
+        <v-btn text color="red" @click="dismissIntent(intent.$id)"
+          >Dismiss</v-btn
+        >
+      </template> </v-banner
+    >{{ paymentIntentsVisible }}
   </div>
 </template>
 
 <script lang="ts">
 import Vue from 'vue'
-import { mapActions } from 'vuex'
+import { mapActions, mapMutations, mapState } from 'vuex'
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+const timestamp = () => Math.floor(Date.now() / 1000)
 
 export default Vue.extend({
   data() {
-    return { v0: true, paymentIntents: {} }
+    return { paymentIntents: {} }
   },
   computed: {
+    ...mapState(['paymentIntentsVisible']),
     freshPaymentIntents() {
       // @ts-ignore
       const { paymentIntents } = this
+      console.log('paymentIntents :>> ', paymentIntents)
 
-      const sortable = []
+      const freshIntents = []
       for (const intent in paymentIntents) {
-        sortable.push(paymentIntents[intent])
+        console.log('intent :>> ', intent)
+        freshIntents.push(paymentIntents[intent])
       }
-      console.log('sortable :>> ', sortable)
 
-      sortable.sort(function (a, b) {
-        return a[1].timestamp - b[1].timestamp
+      freshIntents.sort(function (a, b) {
+        return b.timestamp - a.timestamp
       })
-      return sortable
+      return freshIntents
     },
   },
   created() {
@@ -61,8 +70,13 @@ export default Vue.extend({
   async mounted() {},
   methods: {
     ...mapActions(['queryDocuments']),
+    ...mapMutations(['dismissPaymentIntent']),
+    dismissIntent(docId: string) {
+      console.log('this.paymentIntentsVisible :>> ', this.paymentIntentsVisible)
+      this.dismissPaymentIntent(docId)
+      console.log('this.paymentIntentsVisible :>> ', this.paymentIntentsVisible)
+    },
     requestFromUserId(requesteeUserId: string) {
-      alert(requesteeUserId)
       const intent = this.paymentIntents[requesteeUserId]
       console.log('intent :>> ', intent)
       // @ts-ignore
@@ -77,9 +91,10 @@ export default Vue.extend({
         requesteeUserId,
         requesteeUserName,
         fiatAmount,
-        mode: 'Amend',
+        mode: 'Intent',
       }
       this.$store.commit('setPOSOptions', POSOpts)
+      this.dismissIntent(intent.$id)
       this.$router.push('/charge')
     },
     async pollPaymentIntents() {
@@ -88,12 +103,8 @@ export default Vue.extend({
         startAt: 1,
         orderBy: [['timestamp', 'desc']],
         where: [
-          [
-            'requesterUserId',
-            '==',
-            'B34j8pPUinnYbyWC6YAaL7viGexGmcbQdJ5SvPKqiH2Q',
-            // this.$store.state.name.docId
-          ],
+          ['requesterUserId', '==', this.$store.state.name.docId],
+          ['timestamp', '>', timestamp() - 120],
         ],
       }
       const documents = await this.queryDocuments({
@@ -101,14 +112,13 @@ export default Vue.extend({
         typeLocator: 'PaymentIntent',
         queryOpts,
       })
-      //   this.paymentIntents = documents.map((doc: any) => doc.toJSON())
-      this.paymentIntents = documents.reduce(function (map: any, obj: any) {
-        map[obj.data.requesteeUserId] = obj.toJSON()
-        return map
-      }, {})
-      console.log('this.paymentIntents :>> ', this.paymentIntents)
-      console.log(Object.entries(this.paymentIntents))
-      await sleep(6000)
+      this.paymentIntents = documents
+        .reverse()
+        .reduce(function (map: any, obj: any) {
+          map[obj.data.requesteeUserId] = obj.toJSON()
+          return map
+        }, {})
+      await sleep(2000)
       this.pollPaymentIntents()
     },
   },
