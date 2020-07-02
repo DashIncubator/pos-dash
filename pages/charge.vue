@@ -200,14 +200,21 @@
     <v-btn color="error" nuxt to="/">Cancel</v-btn>
     <v-overlay :value="waitingForPayment">
       <!-- <v-overlay> -->
-      <v-card
-        ><v-card-title>Waiting for payment</v-card-title>
-        <svg
-          v-if="!isPaid"
-          class="checkspace"
-          xmlns="http://www.w3.org/2000/svg"
-          viewBox="0 0 52 52"
-        />
+      <v-card color="#012060" min-width="275px"
+        ><v-card-title class="text-center">Waiting for payment</v-card-title>
+        <div v-if="!isPaid" class="loadcontainer">
+          <div class="holder">
+            <div class="box"></div>
+          </div>
+          <div class="holder">
+            <div class="box"></div>
+          </div>
+          <div class="holder">
+            <div class="box"></div>
+          </div>
+        </div>
+        <v-spacer style="height: 40px;" />
+        <v-spacer v-if="!isPaid" style="height: 100px;" />
         <svg
           v-if="isPaid"
           class="checkmark"
@@ -227,9 +234,11 @@
             d="M14.1 27.2l7.1 7.2 16.7-16.8"
           />
         </svg>
+        <v-spacer style="height: 40px;" />
         <v-card-text class="text-center"
-          >Received {{ satoshisReceived }} /
-          {{ satoshisRequested }}</v-card-text
+          ><span v-if="satoshisReceived > 0"
+            >Received {{ satoshisReceived }} / {{ satoshisRequested }}</span
+          >&nbsp;</v-card-text
         >
         <v-card-actions>
           <v-btn v-if="!isPaid" class="mx-auto" nuxt to="/" color="red"
@@ -307,7 +316,7 @@ export default Vue.extend({
       if (this.satoshisReceived >= document.encSatoshis) {
         this.isPaid = true
         setTimeout(() => {
-          this.waitingForPayment = false
+          // this.waitingForPayment = false
           this.$router.push('/')
         }, 5000)
       } else {
@@ -343,6 +352,216 @@ export default Vue.extend({
 </script>
 
 <style scoped>
+*,
+*:before,
+*:after {
+  box-sizing: border-box;
+}
+
+body {
+  background: #012060;
+}
+
+.loadcontainer {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  -webkit-perspective: 2000px;
+  perspective: 2000px;
+  -webkit-transform: rotateX(-30deg) rotateY(-45deg);
+  transform: rotateX(-30deg) rotateY(-45deg);
+}
+
+.holder {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  -webkit-transform: translate3d(0em, 3em, 1.5em);
+  transform: translate3d(0em, 3em, 1.5em);
+}
+.holder:last-child {
+  -webkit-transform: rotateY(-90deg) rotateX(90deg) translate3d(0, 3em, 1.5em);
+  transform: rotateY(-90deg) rotateX(90deg) translate3d(0, 3em, 1.5em);
+}
+.holder:first-child {
+  -webkit-transform: rotateZ(-90deg) rotateX(-90deg) translate3d(0, 3em, 1.5em);
+  transform: rotateZ(-90deg) rotateX(-90deg) translate3d(0, 3em, 1.5em);
+}
+.holder:nth-child(1) .box {
+  background-color: #008de4;
+}
+.holder:nth-child(1) .box:before {
+  background-color: #004e7e;
+}
+.holder:nth-child(1) .box:after {
+  background-color: #006db1;
+}
+.holder:nth-child(2) .box {
+  background-color: #787878;
+}
+.holder:nth-child(2) .box:before {
+  background-color: #454545;
+}
+.holder:nth-child(2) .box:after {
+  background-color: #5f5f5f;
+}
+.holder:nth-child(3) .box {
+  background-color: #ffffff;
+}
+.holder:nth-child(3) .box:before {
+  background-color: #cccccc;
+}
+.holder:nth-child(3) .box:after {
+  background-color: #e6e6e6;
+}
+
+.box {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  -webkit-transform: translate(-50%, -50%);
+  transform: translate(-50%, -50%);
+  -webkit-transform-style: preserve-3d;
+  transform-style: preserve-3d;
+  -webkit-animation: ani-box 6s infinite;
+  animation: ani-box 6s infinite;
+  width: 3em;
+  height: 3em;
+}
+.box:before,
+.box:after {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  content: '';
+}
+.box:before {
+  left: 100%;
+  bottom: 0;
+  -webkit-transform: rotateY(90deg);
+  transform: rotateY(90deg);
+  -webkit-transform-origin: 0 50%;
+  transform-origin: 0 50%;
+}
+.box:after {
+  left: 0;
+  bottom: 100%;
+  -webkit-transform: rotateX(90deg);
+  transform: rotateX(90deg);
+  -webkit-transform-origin: 0 100%;
+  transform-origin: 0 100%;
+}
+
+@-webkit-keyframes ani-box {
+  8.33% {
+    -webkit-transform: translate3d(-50%, -50%, 0) scaleZ(2);
+    transform: translate3d(-50%, -50%, 0) scaleZ(2);
+  }
+  16.7% {
+    -webkit-transform: translate3d(-50%, -50%, -3em) scaleZ(1);
+    transform: translate3d(-50%, -50%, -3em) scaleZ(1);
+  }
+  25% {
+    -webkit-transform: translate3d(-50%, -100%, -3em) scaleY(2);
+    transform: translate3d(-50%, -100%, -3em) scaleY(2);
+  }
+  33.3% {
+    -webkit-transform: translate3d(-50%, -150%, -3em) scaleY(1);
+    transform: translate3d(-50%, -150%, -3em) scaleY(1);
+  }
+  41.7% {
+    -webkit-transform: translate3d(-100%, -150%, -3em) scaleX(2);
+    transform: translate3d(-100%, -150%, -3em) scaleX(2);
+  }
+  50% {
+    -webkit-transform: translate3d(-150%, -150%, -3em) scaleX(1);
+    transform: translate3d(-150%, -150%, -3em) scaleX(1);
+  }
+  58.3% {
+    -webkit-transform: translate3d(-150%, -150%, 0) scaleZ(2);
+    transform: translate3d(-150%, -150%, 0) scaleZ(2);
+  }
+  66.7% {
+    -webkit-transform: translate3d(-150%, -150%, 0) scaleZ(1);
+    transform: translate3d(-150%, -150%, 0) scaleZ(1);
+  }
+  75% {
+    -webkit-transform: translate3d(-150%, -100%, 0) scaleY(2);
+    transform: translate3d(-150%, -100%, 0) scaleY(2);
+  }
+  83.3% {
+    -webkit-transform: translate3d(-150%, -50%, 0) scaleY(1);
+    transform: translate3d(-150%, -50%, 0) scaleY(1);
+  }
+  91.7% {
+    -webkit-transform: translate3d(-100%, -50%, 0) scaleX(2);
+    transform: translate3d(-100%, -50%, 0) scaleX(2);
+  }
+  100% {
+    -webkit-transform: translate3d(-50%, -50%, 0) scaleX(1);
+    transform: translate3d(-50%, -50%, 0) scaleX(1);
+  }
+}
+
+@keyframes ani-box {
+  8.33% {
+    -webkit-transform: translate3d(-50%, -50%, 0) scaleZ(2);
+    transform: translate3d(-50%, -50%, 0) scaleZ(2);
+  }
+  16.7% {
+    -webkit-transform: translate3d(-50%, -50%, -3em) scaleZ(1);
+    transform: translate3d(-50%, -50%, -3em) scaleZ(1);
+  }
+  25% {
+    -webkit-transform: translate3d(-50%, -100%, -3em) scaleY(2);
+    transform: translate3d(-50%, -100%, -3em) scaleY(2);
+  }
+  33.3% {
+    -webkit-transform: translate3d(-50%, -150%, -3em) scaleY(1);
+    transform: translate3d(-50%, -150%, -3em) scaleY(1);
+  }
+  41.7% {
+    -webkit-transform: translate3d(-100%, -150%, -3em) scaleX(2);
+    transform: translate3d(-100%, -150%, -3em) scaleX(2);
+  }
+  50% {
+    -webkit-transform: translate3d(-150%, -150%, -3em) scaleX(1);
+    transform: translate3d(-150%, -150%, -3em) scaleX(1);
+  }
+  58.3% {
+    -webkit-transform: translate3d(-150%, -150%, 0) scaleZ(2);
+    transform: translate3d(-150%, -150%, 0) scaleZ(2);
+  }
+  66.7% {
+    -webkit-transform: translate3d(-150%, -150%, 0) scaleZ(1);
+    transform: translate3d(-150%, -150%, 0) scaleZ(1);
+  }
+  75% {
+    -webkit-transform: translate3d(-150%, -100%, 0) scaleY(2);
+    transform: translate3d(-150%, -100%, 0) scaleY(2);
+  }
+  83.3% {
+    -webkit-transform: translate3d(-150%, -50%, 0) scaleY(1);
+    transform: translate3d(-150%, -50%, 0) scaleY(1);
+  }
+  91.7% {
+    -webkit-transform: translate3d(-100%, -50%, 0) scaleX(2);
+    transform: translate3d(-100%, -50%, 0) scaleX(2);
+  }
+  100% {
+    -webkit-transform: translate3d(-50%, -50%, 0) scaleX(1);
+    transform: translate3d(-50%, -50%, 0) scaleX(1);
+  }
+}
+
 .checkmark__circle {
   stroke-dasharray: 166;
   stroke-dashoffset: 166;
@@ -360,7 +579,6 @@ export default Vue.extend({
   display: block;
   stroke-width: 2;
   margin: 10% auto;
-  box-shadow: inset 0px 0px 0px 30px blue;
 }
 .checkmark {
   width: 56px;
