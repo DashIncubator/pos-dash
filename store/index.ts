@@ -326,11 +326,15 @@ export const actions: ActionTree<RootState, RootState> = {
       queryOpts,
     })
     console.log('transactions :>> ', transactions)
+
+    // No transaction, return early
+    if (!transactions.length) return []
+
     // @ts-ignore
     const DAPIclient = await client.getDAPIClient()
     console.log(
       'getutxo',
-      await DAPIclient.getUTXO(transactions[0].data.encAddress)
+      await DAPIclient.getUTXO(transactions[0]?.data.encAddress)
     )
     const transactionsWithUTXOs = await Promise.all(
       transactions.map(async (tx: any) => {
