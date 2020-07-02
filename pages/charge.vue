@@ -303,17 +303,22 @@ export default Vue.extend({
   },
   methods: {
     ...mapActions(['requestFiat', 'getUTXO', 'getAddressSummary']),
-    async pollWaitForPayment(document) {
+    async pollWaitForPayment(document: any) {
       console.log('document :>> ', document)
+      // @ts-ignore
       this.satoshisRequested = document.encSatoshis
       // console.log(
       //   'this.getUTXO(document.encAddress) :>> ',
       //   await this.getUTXO(document.encAddress)
       // )
+      // @ts-ignore
       const summary = await this.getAddressSummary(document.encAddress)
 
+      // @ts-ignore
       this.satoshisReceived = summary.unconfirmedBalanceSat
+      // @ts-ignore
       if (this.satoshisReceived >= document.encSatoshis) {
+        // @ts-ignore
         this.isPaid = true
         setTimeout(() => {
           // this.waitingForPayment = false
@@ -321,6 +326,7 @@ export default Vue.extend({
         }, 5000)
       } else {
         await sleep(2000)
+        // @ts-ignore
         this.pollWaitForPayment(document)
       }
     },
@@ -345,6 +351,7 @@ export default Vue.extend({
       })
       console.log('request fiat document :>> ', document)
       console.log('request fiat address :>> ', document.encAddress)
+      // @ts-ignore
       this.pollWaitForPayment(document)
     },
   },

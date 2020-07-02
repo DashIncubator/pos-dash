@@ -45,6 +45,7 @@ export const getters: GetterTree<RootState, RootState> = {
 
 export const mutations: MutationTree<RootState> = {
   dismissPaymentIntent: (state, docId: string) => {
+    // @ts-ignore
     state.paymentIntentsVisible[docId] = false
   },
   setPOSOptions: (state, POSOpts) => {

@@ -65,6 +65,7 @@ export default Vue.extend({
     },
   },
   created() {
+    // @ts-ignore
     this.pollPaymentIntents()
   },
   async mounted() {},
@@ -73,10 +74,12 @@ export default Vue.extend({
     ...mapMutations(['dismissPaymentIntent']),
     dismissIntent(docId: string) {
       console.log('this.paymentIntentsVisible :>> ', this.paymentIntentsVisible)
+      // @ts-ignore
       this.dismissPaymentIntent(docId)
       console.log('this.paymentIntentsVisible :>> ', this.paymentIntentsVisible)
     },
     requestFromUserId(requesteeUserId: string) {
+      // @ts-ignore
       const intent = this.paymentIntents[requesteeUserId]
       console.log('intent :>> ', intent)
       // @ts-ignore
@@ -94,6 +97,7 @@ export default Vue.extend({
         mode: 'Intent',
       }
       this.$store.commit('setPOSOptions', POSOpts)
+      // @ts-ignore
       this.dismissIntent(intent.$id)
       this.$router.push('/charge')
     },
@@ -109,11 +113,13 @@ export default Vue.extend({
           ['timestamp', '>', timestamp() - 120],
         ],
       }
+      // @ts-ignore
       const documents = await this.queryDocuments({
         contract: 'PaymentRequest',
         typeLocator: 'PaymentIntent',
         queryOpts,
       })
+      // @ts-ignore
       this.paymentIntents = documents
         .reverse()
         .reduce(function (map: any, obj: any) {
@@ -121,6 +127,7 @@ export default Vue.extend({
           return map
         }, {})
       await sleep(2000)
+      // @ts-ignore
       this.pollPaymentIntents()
     },
   },
