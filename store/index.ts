@@ -146,7 +146,17 @@ export const actions: ActionTree<RootState, RootState> = {
       console.error('Something went wrong:', e)
     }
   },
-  async refundTx({ commit }, { refundTxId, satoshis }) {
+  async cancelPaymentRequest({ dispatch }, requestDocument) {
+    console.log('cancelling requestDocument :>> ', requestDocument);
+      
+    requestDocument.satoshis = 0
+      
+    const document = await dispatch('requestPayment',requestDocument)
+      
+    console.log('cancelled document :>> ', document)
+
+  },
+  async refundPaymentRequest({ commit }, { refundTxId, satoshis }) {
     const account = await client.wallet.getAccount()
     try {
       // @ts-ignore
@@ -321,7 +331,7 @@ export const actions: ActionTree<RootState, RootState> = {
     })
     return document
   },
-  async fetchTransactions({ dispatch }) {
+  async fetchPaymentRequests({ dispatch }) {
     // TODO cache & paginate using timestamp
     const queryOpts = {
       limit: 10,

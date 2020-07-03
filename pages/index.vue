@@ -16,7 +16,7 @@
 
 <script lang="ts">
 import Vue from 'vue'
-import { mapActions } from 'vuex'
+// import { mapActions } from 'vuex'
 // @ts-ignore
 import VueQrcode from '@chenfengyuan/vue-qrcode'
 import PaymentRequestHistory from '../components/PaymentRequestHistory.vue'
@@ -30,7 +30,6 @@ export default Vue.extend({
   },
   async mounted() {},
   methods: {
-    ...mapActions(['fetchTransactions', 'refundTx']),
   },
 })
 </script>

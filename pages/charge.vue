@@ -201,7 +201,7 @@
     <v-overlay :value="waitingForPayment">
       <!-- <v-overlay> -->
       <v-card color="#012060" min-width="275px"
-        ><v-card-title class="text-center">Waiting for payment</v-card-title>
+        ><v-card-title class="text-center mx-auto">Waiting for payment</v-card-title>
         <div v-if="!isPaid" class="loadcontainer">
           <div class="holder">
             <div class="box"></div>
@@ -238,10 +238,14 @@
         <v-card-text class="text-center"
           ><span v-if="satoshisReceived > 0"
             >Received {{ satoshisReceived }} / {{ satoshisRequested }}</span
-          >&nbsp;</v-card-text
+          >{{ refId }}</v-card-text
         >
         <v-card-actions>
-          <v-btn v-if="!isPaid" class="mx-auto" nuxt to="/" color="red"
+          <v-btn
+            v-if="!isPaid"
+            class="mx-auto"
+            color="red"
+            @click="cancelPaymentRequest(document)"
             >Cancel</v-btn
           >
           <v-btn v-if="isPaid" class="mx-auto" nuxt to="/" color="green"
@@ -274,6 +278,7 @@ export default Vue.extend({
       satoshisReceived: 0,
       satoshisRequested: -1,
       isPaid: false,
+      document: {}
     }
   },
   computed: {
@@ -302,8 +307,15 @@ export default Vue.extend({
     this.$store.commit('resetPOSOptions')
   },
   methods: {
-    ...mapActions(['requestFiat', 'getUTXO', 'getAddressSummary']),
-    async pollWaitForPayment(document: any) {
+    ...mapActions([
+      'requestFiat',
+      'requestPayment',
+      'cancelPaymentRequest',
+      'getAddressSummary',
+    ]),
+    async pollWaitForPayment() {
+      // @ts-ignore
+      const {document} = this
       console.log('document :>> ', document)
       // @ts-ignore
       this.satoshisRequested = document.encSatoshis
@@ -327,7 +339,7 @@ export default Vue.extend({
       } else {
         await sleep(2000)
         // @ts-ignore
-        this.pollWaitForPayment(document)
+        this.pollWaitForPayment()
       }
     },
     async reqPayment() {
@@ -341,7 +353,8 @@ export default Vue.extend({
       console.log('memo :>> ', memo)
       console.log('customer :>> ', customer)
       const [requesteeUserName, requesteeUserId] = customer.split(':')
-      const document = await requestFiat({
+      //@ts-ignore
+      this.document = await requestFiat({
         requesteeUserId,
         requesteeUserName,
         fiatAmount,
@@ -349,10 +362,10 @@ export default Vue.extend({
         refId,
         memo,
       })
-      console.log('request fiat document :>> ', document)
-      console.log('request fiat address :>> ', document.encAddress)
       // @ts-ignore
-      this.pollWaitForPayment(document)
+      console.log('request fiat document :>> ', this.document)
+      // @ts-ignore
+      this.pollWaitForPayment()
     },
   },
 })
