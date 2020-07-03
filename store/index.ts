@@ -155,30 +155,36 @@ export const actions: ActionTree<RootState, RootState> = {
 
     console.log('cancelled document :>> ', document)
   },
-  async refundPaymentRequest({ commit }, { refundTxId, satoshis }) {
-    const account = await client.wallet.getAccount()
+  async refundPaymentRequest({ commit, dispatch }, requestDocument) {
     try {
-      // @ts-ignore
-      const DAPIclient = client.getDAPIClient()
-      const refundTx = await DAPIclient.getTransaction(refundTxId)
-      console.log('refundTx :>> ', refundTx)
-      console.log('tx.toJSON() :>> ', refundTx.toJSON())
+      // Get refund amount
+      const receivedAddress = requestDocument.data.encAddress
+      console.log('requestDocument :>> ', requestDocument)
+      console.log('receivedAddress :>> ', receivedAddress)
+      const summary = await dispatch('getAddressSummary', receivedAddress)
+      console.log('summary :>> ', summary)
+      const { totalReceivedSat } = summary
 
-      const dashcoreTx = new dashcore.Transaction(refundTx)
-      console.log('dashcoreTx :>> ', dashcoreTx)
+      // Get refund address
+      const queryOpts = {
+        limit: 1,
+        startAt: 1,
+        where: [['$id', '==', requestDocument.data.refId]],
+      }
+      const refundAddressDocs = await dispatch('queryDocuments', {
+        contract: 'PaymentRequest',
+        typeLocator: 'PaymentIntent',
+        queryOpts,
+      })
+      console.log('refundAddressDocs :>> ', refundAddressDocs)
+      const refundAddress = refundAddressDocs[0].data.encRefundAddress
 
-      const hash = dashcore.crypto.Hash.sha256ripemd160(
-        dashcoreTx.inputs[0].script.chunks[0].buf
-      )
-
-      const refundAddress = new dashcore.Address(hash, 'testnet').toString()
-      console.log('refundAddress :>> ', refundAddress)
-      console.log('satoshis :>> ', satoshis)
-      console.log('typeof satoshis :>> ', typeof satoshis)
+      // Send refund tx
+      const account = await client.wallet.getAccount()
       console.log('balance', account.getTotalBalance())
       const transaction = account.createTransaction({
         recipient: refundAddress,
-        satoshis,
+        satoshis: totalReceivedSat,
         deductFee: false,
       })
       console.log('transaction :>> ', transaction)

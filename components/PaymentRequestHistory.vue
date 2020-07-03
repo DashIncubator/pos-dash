@@ -89,11 +89,11 @@ export default Vue.extend({
     }
   },
   async mounted() {
-    const { fetchpaymentRequests } = this
-    this.paymentRequests = await fetchpaymentRequests()
+    const { fetchPaymentRequests } = this
+    this.paymentRequests = await fetchPaymentRequests()
   },
   methods: {
-    ...mapActions(['fetchpaymentRequests', 'refundPaymentRequest']),
+    ...mapActions(['fetchPaymentRequests', 'refundPaymentRequest']),
     date(timestamp: number) {
       return new Date(timestamp * 1000)
     },
