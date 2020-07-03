@@ -16,7 +16,6 @@
       </v-avatar>
       <b>
         {{ intent.requesteeUserName }}
-        {{ intent.$id.slice(-4) }}
       </b>
       is ready to pay.
       <template v-slot:actions>
