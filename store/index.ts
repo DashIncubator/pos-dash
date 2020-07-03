@@ -147,14 +147,13 @@ export const actions: ActionTree<RootState, RootState> = {
     }
   },
   async cancelPaymentRequest({ dispatch }, requestDocument) {
-    console.log('cancelling requestDocument :>> ', requestDocument);
-      
-    requestDocument.satoshis = 0
-      
-    const document = await dispatch('requestPayment',requestDocument)
-      
-    console.log('cancelled document :>> ', document)
+    console.log('cancelling requestDocument :>> ', requestDocument)
 
+    requestDocument.satoshis = 0
+
+    const document = await dispatch('requestPayment', requestDocument)
+
+    console.log('cancelled document :>> ', document)
   },
   async refundPaymentRequest({ commit }, { refundTxId, satoshis }) {
     const account = await client.wallet.getAccount()

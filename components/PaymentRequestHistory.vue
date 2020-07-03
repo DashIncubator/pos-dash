@@ -12,18 +12,18 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="(paymentRequest, idx) in paymentRequests" :key="idx">
+          <tr v-for="(transaction, idx) in transactions" :key="idx">
             <td>
               <timeago
                 class="subtitle-1"
-                :datetime="date(paymentRequest.data.timestamp)"
+                :datetime="date(transaction.data.timestamp)"
                 :auto-update="60"
               />
             </td>
-            <td>{{ paymentRequest.data.requesteeUserName }}</td>
+            <td>{{ transaction.data.requesteeUserName }}</td>
             <td>
-              {{ paymentRequest.data.encFiatAmount }}
-              {{ paymentRequest.data.encFiatSymbol }}
+              {{ transaction.data.encFiatAmount }}
+              {{ transaction.data.encFiatSymbol }}
             </td>
             <td>{{ status(idx) }}</td>
             <td>
@@ -85,28 +85,28 @@ import { mapActions } from 'vuex'
 export default Vue.extend({
   data() {
     return {
-      paymentRequests: [],
+      transactions: [],
     }
   },
   async mounted() {
-    const { fetchPaymentRequests } = this
-    this.paymentRequests = await fetchPaymentRequests()
+    const { fetchTransactions } = this
+    this.transactions = await fetchTransactions()
   },
   methods: {
-    ...mapActions(['fetchPaymentRequests', 'refundTx']),
+    ...mapActions(['fetchTransactions', 'refundTx']),
     date(timestamp: number) {
       return new Date(timestamp * 1000)
     },
     amountPaid(idx: number) {
-      const tx: any = this.paymentRequests[idx]
+      const tx: any = this.transactions[idx]
       const total = tx.utxos.items.reduce((acc: number, val: any) => {
         return acc + val.satoshis
       }, 0)
       return total
     },
     status(idx: number) {
-      const { amountPaid, paymentRequests } = this
-      const tx: any = paymentRequests[idx]
+      const { amountPaid, transactions } = this
+      const tx: any = transactions[idx]
       if (tx.data.encSatoshis === amountPaid(idx).toString()) {
         return 'Paid'
       } else {
@@ -127,22 +127,22 @@ export default Vue.extend({
     },
     execOption(option: any, idx: number) {
       if (option === 'Refund') {
-        // @ts-ignore
-        this.refundPaymentRequest(
+        this.refundTx({
           // @ts-ignore
+          refundTxId: this.transactions[idx].utxos.items[0].txid,
           this.paymentRequests[idx]
-        )
-      }
+          satoshis: parseInt(this.transactions[idx].data.encSatoshis),
+        })
       if (option === 'Amend') {
         // @ts-ignore
         const refId = this.paymentRequests[idx].id
-        // @ts-ignore
+        const refId = this.transactions[idx].id
         const requesteeUserName = this.paymentRequests[idx].data
-          .requesteeUserName
+        const requesteeUserName = this.transactions[idx].data.requesteeUserName
         // @ts-ignore
-        const requesteeUserId = this.paymentRequests[idx].data.requesteeUserId
+        const requesteeUserId = this.transactions[idx].data.requesteeUserId
         // @ts-ignore
-        const fiatAmount = this.paymentRequests[idx].data.encFiatAmount
+        const fiatAmount = this.transactions[idx].data.encFiatAmount
         const POSOpts = {
           refId,
           requesteeUserId,
