@@ -93,7 +93,7 @@ export default Vue.extend({
     this.transactions = await fetchTransactions()
   },
   methods: {
-    ...mapActions(['fetchTransactions', 'refundTx']),
+    ...mapActions(['fetchTransactions', 'refundPaymentRequest']),
     date(timestamp: number) {
       return new Date(timestamp * 1000)
     },
@@ -127,18 +127,14 @@ export default Vue.extend({
     },
     execOption(option: any, idx: number) {
       if (option === 'Refund') {
-        this.refundTx({
-          // @ts-ignore
-          refundTxId: this.transactions[idx].utxos.items[0].txid,
-          this.paymentRequests[idx]
-          satoshis: parseInt(this.transactions[idx].data.encSatoshis),
-        })
+        // @ts-ignore
+        this.refundPaymentRequest(this.paymentRequests[idx])
+      }
       if (option === 'Amend') {
         // @ts-ignore
         const refId = this.paymentRequests[idx].id
-        const refId = this.transactions[idx].id
+        // @ts-ignore
         const requesteeUserName = this.paymentRequests[idx].data
-        const requesteeUserName = this.transactions[idx].data.requesteeUserName
         // @ts-ignore
         const requesteeUserId = this.transactions[idx].data.requesteeUserId
         // @ts-ignore
