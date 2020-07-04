@@ -13,11 +13,12 @@
     @input="$emit('input', $event)"
   ></v-autocomplete>
 </template>
-<script>
+<script lang="ts">
+import Vue from 'vue'
 import { mapActions } from 'vuex'
 
-export default {
-  props: ['value'],
+export default Vue.extend({
+  props: { value: { type: String, default: '' } },
   data() {
     return {
       loading: false,
@@ -37,15 +38,15 @@ export default {
   },
   methods: {
     ...mapActions(['searchDashNames']),
-    async querySelections(v) {
+    async querySelections(v: string) {
       this.loading = true
       const dashNames = await this.searchDashNames(v)
-      this.items = dashNames.map((name) => {
+      this.items = dashNames.map((name: any) => {
         return { text: name.data.label, value: `${name.data.label}:${name.id}` }
       })
       console.log('items :>> ', this.items)
       this.loading = false
     },
   },
-}
+})
 </script>

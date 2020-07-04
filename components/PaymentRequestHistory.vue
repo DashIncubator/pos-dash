@@ -83,10 +83,13 @@ import Vue from 'vue'
 import { mapActions } from 'vuex'
 
 export default Vue.extend({
-  data(): any {
-    return {
-      paymentRequests: [],
+  data: () => {
+    const data: {
+      paymentRequests: any
+    } = {
+      paymentRequests: {},
     }
+    return data
   },
   async mounted() {
     const { fetchPaymentRequests } = this

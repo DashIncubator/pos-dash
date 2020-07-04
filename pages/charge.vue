@@ -296,10 +296,10 @@ export default Vue.extend({
   },
   computed: {
     fiatSymbol: {
-      get() {
+      get(): string {
         return this.$store.state.pos.currency
       },
-      set(value) {
+      set(value: string) {
         this.$store.commit('setPosCurrency', value)
       },
     },
@@ -319,7 +319,7 @@ export default Vue.extend({
       'cancelPaymentRequest',
       'getAddressSummary',
     ]),
-    async pollWaitForPayment() {
+    async pollWaitForPayment(): Promise<void> {
       const { document } = this
       console.log('document :>> ', document)
       this.satoshisRequested = document.encSatoshis

@@ -41,8 +41,13 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 const timestamp = () => Math.floor(Date.now() / 1000)
 
 export default Vue.extend({
-  data(): any {
-    return { paymentIntents: {} }
+  data: () => {
+    const data: {
+      paymentIntents: any
+    } = {
+      paymentIntents: {},
+    }
+    return data
   },
   computed: {
     ...mapState(['paymentIntentsVisible']),
