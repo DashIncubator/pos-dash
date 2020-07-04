@@ -41,13 +41,12 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 const timestamp = () => Math.floor(Date.now() / 1000)
 
 export default Vue.extend({
-  data() {
+  data(): any {
     return { paymentIntents: {} }
   },
   computed: {
     ...mapState(['paymentIntentsVisible']),
-    freshPaymentIntents() {
-      // @ts-ignore
+    freshPaymentIntents(): Array<any> {
       const { paymentIntents } = this
       console.log('paymentIntents :>> ', paymentIntents)
 
@@ -64,7 +63,6 @@ export default Vue.extend({
     },
   },
   created() {
-    // @ts-ignore
     this.pollPaymentIntents()
   },
   async mounted() {},
@@ -73,20 +71,14 @@ export default Vue.extend({
     ...mapMutations(['dismissPaymentIntent']),
     dismissIntent(docId: string) {
       console.log('this.paymentIntentsVisible :>> ', this.paymentIntentsVisible)
-      // @ts-ignore
       this.dismissPaymentIntent(docId)
       console.log('this.paymentIntentsVisible :>> ', this.paymentIntentsVisible)
     },
     requestFromUserId(requesteeUserId: string) {
-      // @ts-ignore
       const intent = this.paymentIntents[requesteeUserId]
       console.log('intent :>> ', intent)
-      // @ts-ignore
       const refId = intent.$id
-      // @ts-ignore
       const requesteeUserName = intent.requesteeUserName
-      // @ts-ignore
-      // @ts-ignore
       const fiatAmount = intent.encFiatAmount
       const POSOpts = {
         refId,
@@ -96,7 +88,6 @@ export default Vue.extend({
         mode: 'Intent',
       }
       this.$store.commit('setPOSOptions', POSOpts)
-      // @ts-ignore
       this.dismissIntent(intent.$id)
       this.$router.push('/charge')
     },
@@ -112,13 +103,11 @@ export default Vue.extend({
           ['timestamp', '>', timestamp() - 120],
         ],
       }
-      // @ts-ignore
       const documents = await this.queryDocuments({
         contract: 'PaymentRequest',
         typeLocator: 'PaymentIntent',
         queryOpts,
       })
-      // @ts-ignore
       this.paymentIntents = documents
         .reverse()
         .reduce(function (map: any, obj: any) {
@@ -126,7 +115,6 @@ export default Vue.extend({
           return map
         }, {})
       await sleep(2000)
-      // @ts-ignore
       this.pollPaymentIntents()
     },
   },

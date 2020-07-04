@@ -10,9 +10,9 @@ const { Unit } = dashcore
 const DashJS = require('dash')
 
 const timestamp = () => Math.floor(Date.now() / 1000)
-let client: { account?: any; wallet?: any; platform?: any }
+let client: any
 
-const getInitState = () => ({
+const getInitState = (): any => ({
   mnemonic:
     'grow lady mule dizzy resource allow mother civil tunnel patient hazard cushion',
   identityId: 'B34j8pPUinnYbyWC6YAaL7viGexGmcbQdJ5SvPKqiH2Q',
@@ -45,7 +45,6 @@ export const getters: GetterTree<RootState, RootState> = {
 
 export const mutations: MutationTree<RootState> = {
   dismissPaymentIntent: (state, docId: string) => {
-    // @ts-ignore
     state.paymentIntentsVisible[docId] = false
   },
   setPOSOptions: (state, POSOpts) => {
@@ -161,9 +160,12 @@ export const actions: ActionTree<RootState, RootState> = {
       const receivedAddress = requestDocument.data.encAddress
       console.log('requestDocument :>> ', requestDocument)
       console.log('receivedAddress :>> ', receivedAddress)
-      const summary = await dispatch('getAddressSummary', receivedAddress)
-      console.log('summary :>> ', summary)
-      const { totalReceivedSat } = summary
+      const UTXO = await dispatch('getUTXO', receivedAddress)
+      const totalReceivedSat = UTXO.items.reduce((acc: number, cur: any) => {
+        return cur.satoshis + acc
+      }, 0)
+      console.log('UTXO :>> ', UTXO)
+      console.log('totalReceivedSat :>> ', totalReceivedSat)
 
       // Get refund address
       const queryOpts = {
@@ -185,11 +187,13 @@ export const actions: ActionTree<RootState, RootState> = {
       const transaction = account.createTransaction({
         recipient: refundAddress,
         satoshis: totalReceivedSat,
-        deductFee: false,
+        utxos: UTXO.items,
+        deductFee: true,
       })
+      const signedTx = account.sign(transaction)
       console.log('transaction :>> ', transaction)
 
-      const result = await account.broadcastTransaction(transaction)
+      const result = await account.broadcastTransaction(signedTx)
       console.log('Transaction broadcast!\nTransaction ID:', result)
       commit('showSnackbar', {
         text: 'Payment sent\n' + result,
@@ -261,7 +265,6 @@ export const actions: ActionTree<RootState, RootState> = {
     console.log('memo :>> ', memo)
     console.log('fiatAmount :>> ', fiatAmount)
     // TODO proper error / timeout handling and rates caching using timestamps
-    // @ts-ignore
     const response = await this.$axios.get(
       'https://rates2.dashretail.org/rates?source=dashretail&symbol=dashusd'
     )
@@ -353,7 +356,6 @@ export const actions: ActionTree<RootState, RootState> = {
     // No transaction, return early
     if (!transactions.length) return []
 
-    // @ts-ignore
     const DAPIclient = await client.getDAPIClient()
     console.log(
       'getutxo',
@@ -398,14 +400,12 @@ export const actions: ActionTree<RootState, RootState> = {
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getUTXO({ state }, address: string) {
-    // @ts-ignore
     const DAPIclient = await client.getDAPIClient()
     const UTXO = await DAPIclient.getUTXO(address)
     return UTXO
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getAddressSummary({ state }, address: string) {
-    // @ts-ignore
     const DAPIclient = await client.getDAPIClient()
     const summary = await DAPIclient.getAddressSummary(address)
     return summary

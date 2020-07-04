@@ -83,14 +83,14 @@ import Vue from 'vue'
 import { mapActions } from 'vuex'
 
 export default Vue.extend({
-  data() {
+  data(): any {
     return {
       paymentRequests: [],
     }
   },
   async mounted() {
     const { fetchPaymentRequests } = this
-    this.paymentRequests = await fetchPaymentRequests()
+    this.paymentRequests = [...(await fetchPaymentRequests())]
   },
   methods: {
     ...mapActions(['fetchPaymentRequests', 'refundPaymentRequest']),
@@ -127,17 +127,12 @@ export default Vue.extend({
     },
     execOption(option: any, idx: number) {
       if (option === 'Refund') {
-        // @ts-ignore
         this.refundPaymentRequest(this.paymentRequests[idx])
       }
       if (option === 'Amend') {
-        // @ts-ignore
         const refId = this.paymentRequests[idx].id
-        // @ts-ignore
         const requesteeUserName = this.paymentRequests[idx].data
-        // @ts-ignore
         const requesteeUserId = this.paymentRequests[idx].data.requesteeUserId
-        // @ts-ignore
         const fiatAmount = this.paymentRequests[idx].data.encFiatAmount
         const POSOpts = {
           refId,

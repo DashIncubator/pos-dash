@@ -201,7 +201,9 @@
     <v-overlay :value="waitingForPayment">
       <!-- <v-overlay> -->
       <v-card color="#012060" min-width="275px"
-        ><v-card-title class="text-center mx-auto">Waiting for payment</v-card-title>
+        ><v-card-title class="text-center mx-auto"
+          >Waiting for payment</v-card-title
+        >
         <div v-if="!isPaid" class="loadcontainer">
           <div class="holder">
             <div class="box"></div>
@@ -260,49 +262,53 @@
 <script lang="ts">
 import Vue from 'vue'
 import { mapActions } from 'vuex'
-// @ts-ignore
-import NameAutocomplete from '../components/NameAutocomplete'
+import NameAutocomplete from '../components/NameAutocomplete.vue'
 // const timestamp = () => Math.floor(Date.now() / 1000)
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
 export default Vue.extend({
   components: { NameAutocomplete },
-  data() {
-    return {
+  data: () => {
+    const data: {
+      mode: string
+      memo: string
+      fiatAmount: number
+      refId: string
+      customer: string
+      waitingForPayment: boolean
+      satoshisReceived: number
+      satoshisRequested: number
+      isPaid: boolean
+      document: any
+    } = {
       mode: 'newSale',
       memo: '',
       fiatAmount: 0,
       refId: '',
-      customer: null,
+      customer: ':',
       waitingForPayment: false,
       satoshisReceived: 0,
       satoshisRequested: -1,
       isPaid: false,
-      document: {}
+      document: {},
     }
+    return data
   },
   computed: {
     fiatSymbol: {
       get() {
-        // @ts-ignore
         return this.$store.state.pos.currency
       },
       set(value) {
-        // @ts-ignore
         this.$store.commit('setPosCurrency', value)
       },
     },
   },
   created() {
-    // @ts-ignore
     this.mode = this.$store.state.pos.mode
-    // @ts-ignore
     this.customer = `${this.$store.state.pos.requesteeUserName}:${this.$store.state.pos.requesteeUserId}`
-    // @ts-ignore
     this.fiatAmount = this.$store.state.pos.fiatAmount
-    // @ts-ignore
     this.refId = this.$store.state.pos.refId
-    // @ts-ignore
     console.log(this.customer, this.fiatAmount, this.refId)
     this.$store.commit('resetPOSOptions')
   },
@@ -314,23 +320,17 @@ export default Vue.extend({
       'getAddressSummary',
     ]),
     async pollWaitForPayment() {
-      // @ts-ignore
-      const {document} = this
+      const { document } = this
       console.log('document :>> ', document)
-      // @ts-ignore
       this.satoshisRequested = document.encSatoshis
       // console.log(
       //   'this.getUTXO(document.encAddress) :>> ',
       //   await this.getUTXO(document.encAddress)
       // )
-      // @ts-ignore
       const summary = await this.getAddressSummary(document.encAddress)
 
-      // @ts-ignore
       this.satoshisReceived = summary.unconfirmedBalanceSat
-      // @ts-ignore
       if (this.satoshisReceived >= document.encSatoshis) {
-        // @ts-ignore
         this.isPaid = true
         setTimeout(() => {
           // this.waitingForPayment = false
@@ -338,22 +338,24 @@ export default Vue.extend({
         }, 5000)
       } else {
         await sleep(2000)
-        // @ts-ignore
         this.pollWaitForPayment()
       }
     },
     async reqPayment() {
-      // @ts-ignore
       this.waitingForPayment = true
-      // @ts-ignore
-      // eslint-disable-next-line prettier/prettier
-      const { customer, fiatAmount, fiatSymbol, memo, refId, requestFiat } = this
+      const {
+        customer,
+        fiatAmount,
+        fiatSymbol,
+        memo,
+        refId,
+        requestFiat,
+      } = this
       console.log('fiatAmount :>> ', fiatAmount)
       console.log('fiatSymbol :>> ', fiatSymbol)
       console.log('memo :>> ', memo)
       console.log('customer :>> ', customer)
       const [requesteeUserName, requesteeUserId] = customer.split(':')
-      //@ts-ignore
       this.document = await requestFiat({
         requesteeUserId,
         requesteeUserName,
@@ -362,9 +364,7 @@ export default Vue.extend({
         refId,
         memo,
       })
-      // @ts-ignore
       console.log('request fiat document :>> ', this.document)
-      // @ts-ignore
       this.pollWaitForPayment()
     },
   },
