@@ -156,19 +156,29 @@ export const actions: ActionTree<RootState, RootState> = {
   },
   async refundPaymentRequest({ commit, dispatch }, requestDocument) {
     try {
-      // Get refund amount
+      // Received Address: where the PaymentRequest received the funds we are about to send back
       const receivedAddress = requestDocument.data.encAddress
-      console.log('requestDocument :>> ', requestDocument)
-      console.log('receivedAddress :>> ', receivedAddress)
-      const UTXO = await dispatch('getUTXO', receivedAddress)
+
+      // Get refund utxos, privateKeys and satoshis amount
+      const [account, UTXO] = await Promise.all([
+        client.wallet.getAccount(),
+        dispatch('getUTXO', receivedAddress),
+      ])
+
       const utxos = UTXO.items
-      const totalReceivedSat = UTXO.items.reduce((acc: number, cur: any) => {
+
+      const privateKeys = await account.getPrivateKeys([receivedAddress])
+
+      const satoshis = UTXO.items.reduce((acc: number, cur: any) => {
         return cur.satoshis + acc
       }, 0)
-      console.log('UTXO :>> ', UTXO)
-      console.log('totalReceivedSat :>> ', totalReceivedSat)
 
-      // Get refund address
+      console.log('UTXO :>> ', UTXO)
+      console.log('totalReceivedSat :>> ', satoshis)
+      console.log('privateKeys :>> ', privateKeys)
+
+      // Refund Address: Get the address where to send the refund
+      // Refactor into method that fetches single document by ID
       const queryOpts = {
         limit: 1,
         startAt: 1,
@@ -183,13 +193,10 @@ export const actions: ActionTree<RootState, RootState> = {
       const refundAddress = refundAddressDocs[0].data.encRefundAddress
 
       // Send refund tx
-      const account = await client.wallet.getAccount()
-      const privateKeys = await account.getPrivateKeys([receivedAddress])
-      console.log('privateKeys :>> ', privateKeys)
       console.log('balance', account.getTotalBalance())
       const transaction = account.createTransaction({
         recipient: refundAddress,
-        satoshis: totalReceivedSat,
+        satoshis,
         utxos,
         privateKeys,
         deductFee: true,
