@@ -161,6 +161,7 @@ export const actions: ActionTree<RootState, RootState> = {
       console.log('requestDocument :>> ', requestDocument)
       console.log('receivedAddress :>> ', receivedAddress)
       const UTXO = await dispatch('getUTXO', receivedAddress)
+      const utxos = UTXO.items
       const totalReceivedSat = UTXO.items.reduce((acc: number, cur: any) => {
         return cur.satoshis + acc
       }, 0)
@@ -183,17 +184,20 @@ export const actions: ActionTree<RootState, RootState> = {
 
       // Send refund tx
       const account = await client.wallet.getAccount()
+      const privateKeys = await account.getPrivateKeys([receivedAddress])
+      console.log('privateKeys :>> ', privateKeys)
       console.log('balance', account.getTotalBalance())
       const transaction = account.createTransaction({
         recipient: refundAddress,
         satoshis: totalReceivedSat,
-        utxos: UTXO.items,
+        utxos,
+        privateKeys,
         deductFee: true,
       })
-      const signedTx = account.sign(transaction)
+      // const signedTx = account.sign(transaction)
       console.log('transaction :>> ', transaction)
 
-      const result = await account.broadcastTransaction(signedTx)
+      const result = await account.broadcastTransaction(transaction)
       console.log('Transaction broadcast!\nTransaction ID:', result)
       commit('showSnackbar', {
         text: 'Payment sent\n' + result,
@@ -354,7 +358,7 @@ export const actions: ActionTree<RootState, RootState> = {
     console.log('transactions :>> ', transactions)
 
     // No transaction, return early
-    if (!transactions.length) return []
+    if (!transactions) return []
 
     const DAPIclient = await client.getDAPIClient()
     console.log(
