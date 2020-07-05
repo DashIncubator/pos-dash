@@ -194,11 +194,12 @@ export const actions: ActionTree<RootState, RootState> = {
         privateKeys,
         deductFee: true,
       })
-      // const signedTx = account.sign(transaction)
-      console.log('transaction :>> ', transaction)
 
+      console.log('transaction :>> ', transaction)
       const result = await account.broadcastTransaction(transaction)
+
       console.log('Transaction broadcast!\nTransaction ID:', result)
+
       commit('showSnackbar', {
         text: 'Payment sent\n' + result,
         color: 'green',
