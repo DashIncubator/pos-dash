@@ -178,19 +178,12 @@ export const actions: ActionTree<RootState, RootState> = {
       console.log('privateKeys :>> ', privateKeys)
 
       // Refund Address: Get the address where to send the refund
-      // Refactor into method that fetches single document by ID
-      const queryOpts = {
-        limit: 1,
-        startAt: 1,
-        where: [['$id', '==', requestDocument.data.refId]],
-      }
-      const refundAddressDocs = await dispatch('queryDocuments', {
-        contract: 'PaymentRequest',
-        typeLocator: 'PaymentIntent',
-        queryOpts,
-      })
-      console.log('refundAddressDocs :>> ', refundAddressDocs)
-      const refundAddress = refundAddressDocs[0].data.encRefundAddress
+      const refundAddressDoc = await client.platform.documents.getById(
+        'PaymentRequest.PaymentIntent',
+        requestDocument.data.refId
+      )
+      console.log('refundAddressDocs :>> ', refundAddressDoc)
+      const refundAddress = refundAddressDoc.data.encRefundAddress
 
       // Send refund tx
       console.log('balance', account.getTotalBalance())
@@ -365,7 +358,7 @@ export const actions: ActionTree<RootState, RootState> = {
     })
     console.log('transactions :>> ', transactions)
 
-    // No transaction, return early
+    // No transactions, return early
     if (!transactions) return []
 
     const DAPIclient = await client.getDAPIClient()
