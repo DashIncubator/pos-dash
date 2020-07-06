@@ -34,12 +34,12 @@
           </v-alert>
         </v-overlay>
         <v-snackbar
-          :value="$store.state.snackbar.show"
+          v-model="snackbar.show"
           :top="'top'"
-          :color="$store.state.snackbar.color"
+          :color="snackbar.color"
         >
-          {{ $store.state.snackbar.text }}
-          <v-btn dark text @click="$store.commit('hideSnackbar')">
+          {{ snackbar.text }}
+          <v-btn dark text @click="snackbar.show = false">
             Close
           </v-btn>
         </v-snackbar>
@@ -53,16 +53,20 @@ import Vue from 'vue'
 
 export default Vue.extend({
   data() {
-    return {}
+    return {
+      snackbar: { show: false, color: 'red', text: '', timestamp: 0 },
+    }
   },
   created() {
     this.$store.dispatch('initWallet')
-    // this.$store.watch(
-    //   (state) => state.snackbar.time,
-    //   () => {
-    //     this.snackbar = JSON.parse(JSON.stringify(this.$store.state.snackbar))
-    //   }
-    // )
+    this.$store.watch(
+      (state) => state.snackbar.timestamp,
+      () => {
+        console.log('state.snackbar :>> ', this.$store.state.snackbar)
+        this.snackbar = JSON.parse(JSON.stringify(this.$store.state.snackbar))
+        console.log('this.snackbar :>> ', this.snackbar)
+      }
+    )
   },
   async beforeDestroy() {
     await this.$store.dispatch('disconnectWallet')
