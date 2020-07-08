@@ -23,7 +23,11 @@
             </td>
             <td>{{ paymentRequest.data.requesteeUserName }}</td>
             <td>
-              {{ paymentRequest.data.encFiatAmount }}
+              {{
+                paymentRequest.data.encFiatAmount === '0'
+                  ? '-'
+                  : paymentRequest.data.encFiatAmount
+              }}
               {{ paymentRequest.data.encFiatSymbol }}
             </td>
             <td>{{ status(idx) }}</td>
@@ -123,13 +127,13 @@ export default Vue.extend({
         pr.data.refId.slice(-4) +
         ' ' +
         pr.summary.txAppearances
-      console.log('infoT :>> ', infoT)
       return infoT
     },
     status(idx: number) {
       const { amountPaid, paymentRequests } = this
       const pr: any = paymentRequests[idx]
 
+      if (pr.data.encSatoshis === '0') return 'Cancelled' // Must be first to return
       if (pr.data.encSatoshis === amountPaid(idx).toString()) {
         return 'Paid'
       }
@@ -163,20 +167,29 @@ export default Vue.extend({
     },
     execOption(option: any, idx: number) {
       if (option === 'Refund') {
-        this.refundPaymentRequest(this.paymentRequests[idx])
+        const requestDocument = this.paymentRequests[idx]
+        this.refundPaymentRequest({ requestDocument })
       }
       if (option === 'Amend') {
         const refId = this.paymentRequests[idx].id
-        const requesteeUserName = this.paymentRequests[idx].data
-        const requesteeUserId = this.paymentRequests[idx].data.requesteeUserId
-        const fiatAmount = this.paymentRequests[idx].data.encFiatAmount
+
+        const {
+          requesteeUserName,
+          requesteeUserId,
+          encFiatAmount,
+        } = this.paymentRequests[idx].data
+
+        const prevDocument = this.paymentRequests[idx]
+
         const POSOpts = {
           refId,
           requesteeUserId,
           requesteeUserName,
-          fiatAmount,
+          fiatAmount: encFiatAmount,
+          prevDocument,
           mode: option,
         }
+
         this.$store.commit('setPOSOptions', POSOpts)
         this.$router.push('/charge')
       }

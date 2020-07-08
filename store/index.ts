@@ -30,6 +30,7 @@ const getInitState = (): any => ({
     requesteeUserName: '',
     refId: '',
     fiatAmount: 0,
+    prevDocument: {},
     mode: 'newSale',
   },
   paymentIntentsVisible: {},
@@ -54,6 +55,7 @@ export const mutations: MutationTree<RootState> = {
     state.pos.refId = POSOpts.refId
     state.pos.fiatAmount = POSOpts.fiatAmount
     state.pos.mode = POSOpts.mode
+    state.pos.prevDocument = { ...POSOpts.prevDocument }
   },
   resetPOSOptions: (state) => {
     // state.pos.currency =
@@ -62,6 +64,7 @@ export const mutations: MutationTree<RootState> = {
     state.pos.refId = ''
     state.pos.fiatAmount = 0
     state.pos.mode = 'newSale'
+    state.pos.prevDocument = {}
   },
   setClientWalletSynced: (state, isSynced) => {
     state.isClientWalletSynced = isSynced
@@ -148,14 +151,19 @@ export const actions: ActionTree<RootState, RootState> = {
   async cancelPaymentRequest({ dispatch }, requestDocument) {
     console.log('cancelling requestDocument :>> ', requestDocument)
 
+    // We're using satoshis === 0 to detect a cancelled request
     requestDocument.satoshis = 0
 
     const document = await dispatch('requestPayment', requestDocument)
 
     console.log('cancelled document :>> ', document)
   },
-  async refundPaymentRequest({ commit, dispatch }, requestDocument) {
+  async refundPaymentRequest(
+    { commit, dispatch },
+    { requestDocument, satoshis = undefined }
+  ) {
     try {
+      console.log('satoshis in refundPaymentRequest :>> ', satoshis)
       // Received Address: where the PaymentRequest received the funds we are about to send back
       const receivedAddress = requestDocument.data.encAddress
 
@@ -169,9 +177,12 @@ export const actions: ActionTree<RootState, RootState> = {
 
       const privateKeys = await account.getPrivateKeys([receivedAddress])
 
-      const satoshis = UTXO.items.reduce((acc: number, cur: any) => {
-        return cur.satoshis + acc
-      }, 0)
+      // If satoshis are not provided, give full refund
+      if (satoshis === undefined) {
+        satoshis = UTXO.items.reduce((acc: number, cur: any) => {
+          return cur.satoshis + acc
+        }, 0)
+      }
 
       console.log('receivedAddress :>> ', receivedAddress)
       console.log('UTXO :>> ', UTXO)
@@ -194,6 +205,7 @@ export const actions: ActionTree<RootState, RootState> = {
         utxos,
         privateKeys,
         deductFee: true,
+        change: receivedAddress,
       })
 
       console.log('transaction :>> ', transaction)
@@ -219,11 +231,6 @@ export const actions: ActionTree<RootState, RootState> = {
   ) {
     await dispatch('isAccountReady')
     const { identityId } = state
-
-    console.log(
-      `Submitting document to ${contract}.${typeLocator} using identityId ${identityId}:`,
-      document
-    )
 
     console.log(
       `Submitting document to ${contract}.${typeLocator} using identityId ${identityId}:`,
@@ -271,16 +278,11 @@ export const actions: ActionTree<RootState, RootState> = {
     console.log('memo :>> ', memo)
     console.log('fiatAmount :>> ', fiatAmount)
     // TODO proper error / timeout handling and rates caching using timestamps
-    const response = await this.$axios.get(
-      'https://rates2.dashretail.org/rates?source=dashretail&symbol=dashusd'
-    )
-    const fiatConversionRate = parseFloat(response.data[0].price)
-    console.log('fiatConversionRate :>> ', fiatConversionRate)
 
-    const dashAmount = fiatAmount / fiatConversionRate
-    console.log('dashAmount :>> ', dashAmount)
-
-    const satoshis = Unit.fromBTC(dashAmount).toSatoshis()
+    const satoshis = await dispatch('fiatToSatoshis', {
+      fiatAmount,
+      fiatSymbol,
+    })
     const document = await dispatch('requestPayment', {
       requesteeUserId,
       requesteeUserName,
@@ -292,6 +294,26 @@ export const actions: ActionTree<RootState, RootState> = {
     })
     return document
   },
+  async fiatToSatoshis({ commit }, { fiatAmount, fiatSymbol }) {
+    console.log('fiatSymbol :>> ', fiatSymbol)
+    try {
+      const response = await this.$axios.get(
+        'https://rates2.dashretail.org/rates?source=dashretail&symbol=dashusd'
+      )
+
+      const fiatConversionRate = parseFloat(response.data[0].price)
+      console.log('fiatConversionRate :>> ', fiatConversionRate)
+
+      const dashAmount = fiatAmount / fiatConversionRate
+      console.log('dashAmount :>> ', dashAmount)
+
+      const satoshis = Unit.fromBTC(dashAmount).toSatoshis()
+      return satoshis
+    } catch (e) {
+      commit('showSnackbar', { text: e.message })
+      throw e
+    }
+  },
   async requestPayment(
     { state, dispatch },
     {
@@ -302,6 +324,7 @@ export const actions: ActionTree<RootState, RootState> = {
       refId = '',
       fiatAmount = 0,
       fiatSymbol = '',
+      address = undefined,
     }
   ) {
     await dispatch('isAccountReady')
@@ -315,7 +338,9 @@ export const actions: ActionTree<RootState, RootState> = {
     //   .getIdentityHDKeyByIndex(0, 0)
     //   .privateKey.toString()
 
-    const address = client.account.getUnusedAddress().address
+    if (address === undefined) {
+      address = client.account.getUnusedAddress().address
+    }
 
     // const encAddress = encrypt(senderPrivateKey, address, recipientPublicKey)
     // const encSatoshis = encrypt(
@@ -368,11 +393,11 @@ export const actions: ActionTree<RootState, RootState> = {
       paymentRequests.map(async (pr: any) => {
         const utxos = await DAPIclient.getUTXO(pr.data.encAddress)
         const summary = await DAPIclient.getAddressSummary(pr.data.encAddress)
-        console.log('Getting UTXO for :>> ', pr.data.encAddress, utxos)
+        // console.log('Getting UTXO for :>> ', pr.data.encAddress, utxos)
         return {
           ...pr,
           summary,
-          utxos: { ...utxos, address: pr.data.encAddress },
+          utxos,
         }
       })
     )

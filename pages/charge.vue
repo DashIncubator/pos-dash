@@ -196,7 +196,7 @@
       label="Order Amount"
       type="number"
     ></v-text-field>
-    <v-btn color="success" @click="reqPayment">Confirm</v-btn>
+    <v-btn color="success" @click="sendRequest">{{ confirmCaption }}</v-btn>
     <v-btn color="error" nuxt to="/">Cancel</v-btn>
     <v-overlay :value="waitingForPayment">
       <!-- <v-overlay> -->
@@ -247,7 +247,7 @@
             v-if="!isPaid"
             class="mx-auto"
             color="red"
-            @click="cancelPaymentRequest(document)"
+            @click="cancelRequest()"
             >Cancel</v-btn
           >
           <v-btn v-if="isPaid" class="mx-auto" nuxt to="/" color="green"
@@ -272,6 +272,7 @@ export default Vue.extend({
     const data: {
       mode: string
       memo: string
+      prevDocument: any
       fiatAmount: number
       refId: string
       customer: string
@@ -283,6 +284,7 @@ export default Vue.extend({
     } = {
       mode: 'newSale',
       memo: '',
+      prevDocument: {},
       fiatAmount: 0,
       refId: '',
       customer: ':',
@@ -303,10 +305,25 @@ export default Vue.extend({
         this.$store.commit('setPosCurrency', value)
       },
     },
+    // eslint-disable-next-line vue/return-in-computed-property
+    confirmCaption() {
+      const fiatDifference =
+        this.fiatAmount - this.prevDocument.data?.encFiatAmount
+      if (fiatDifference < 0) {
+        // @ts-ignore
+        return `Refund: ${fiatDifference} ${this.fiatSymbol}`
+      } else if (fiatDifference > 0) {
+        // @ts-ignore
+        return `Request: ${fiatDifference} ${this.fiatSymbol}`
+      } else {
+        return 'Confirm'
+      }
+    },
   },
   created() {
     this.mode = this.$store.state.pos.mode
     this.customer = `${this.$store.state.pos.requesteeUserName}:${this.$store.state.pos.requesteeUserId}`
+    this.prevDocument = this.$store.state.pos.prevDocument
     this.fiatAmount = this.$store.state.pos.fiatAmount
     this.refId = this.$store.state.pos.refId
     console.log(this.customer, this.fiatAmount, this.refId)
@@ -318,10 +335,56 @@ export default Vue.extend({
       'requestPayment',
       'cancelPaymentRequest',
       'getAddressSummary',
+      'refundPaymentRequest',
     ]),
+    async sendRequest() {
+      console.log('this.mode :>> ', this.mode)
+      if (this.mode === 'Amend') {
+        const { fiatAmount, memo } = this
+
+        const {
+          requesteeUserId,
+          requesteeUserName,
+          refId,
+          encFiatAmount,
+          encSatoshis,
+          encFiatSymbol,
+          encAddress,
+        } = this.prevDocument.data
+
+        // Use original fiat conversion rate
+        const rate = parseFloat(encFiatAmount) / parseFloat(encSatoshis)
+        console.log('rate :>> ', rate)
+        const refundSatoshis = Math.floor(fiatAmount / rate)
+        console.log('refundSatoshis :>> ', refundSatoshis)
+        const satoshis = encSatoshis - refundSatoshis
+        console.log('satoshis :>> ', satoshis)
+
+        await this.requestPayment({
+          requesteeUserId,
+          requesteeUserName,
+          satoshis,
+          memo,
+          refId,
+          fiatAmount,
+          fiatSymbol: encFiatSymbol,
+          address: encAddress,
+        })
+
+        await this.refundPaymentRequest({
+          requestDocument: this.prevDocument,
+          satoshis: refundSatoshis,
+        })
+        this.$router.push('/')
+      }
+
+      if (this.mode === 'Intent') {
+        this.reqPayment()
+      }
+    },
     async pollWaitForPayment(): Promise<void> {
       const { document } = this
-      console.log('document :>> ', document)
+      // console.log('document :>> ', document)
       this.satoshisRequested = document.encSatoshis
       // console.log(
       //   'this.getUTXO(document.encAddress) :>> ',
@@ -340,6 +403,13 @@ export default Vue.extend({
         await sleep(2000)
         this.pollWaitForPayment()
       }
+    },
+    async cancelRequest() {
+      const { document, cancelPaymentRequest, $router } = this
+
+      await cancelPaymentRequest(document)
+
+      $router.push('/')
     },
     async reqPayment() {
       this.waitingForPayment = true
