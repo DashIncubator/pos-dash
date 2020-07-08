@@ -53,11 +53,11 @@ export default Vue.extend({
     ...mapState(['paymentIntentsVisible']),
     freshPaymentIntents(): Array<any> {
       const { paymentIntents } = this
-      console.log('paymentIntents :>> ', paymentIntents)
+      // console.log('paymentIntents :>> ', paymentIntents)
 
       const freshIntents = []
       for (const intent in paymentIntents) {
-        console.log('intent :>> ', intent)
+        // console.log('intent :>> ', intent)
         freshIntents.push(paymentIntents[intent])
       }
 
@@ -68,7 +68,7 @@ export default Vue.extend({
     },
   },
   created() {
-    this.pollPaymentIntents()
+    this.pollPaymentIntents() // TODO enable
   },
   async mounted() {},
   methods: {

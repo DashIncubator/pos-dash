@@ -173,6 +173,7 @@ export const actions: ActionTree<RootState, RootState> = {
         return cur.satoshis + acc
       }, 0)
 
+      console.log('receivedAddress :>> ', receivedAddress)
       console.log('UTXO :>> ', UTXO)
       console.log('totalReceivedSat :>> ', satoshis)
       console.log('privateKeys :>> ', privateKeys)
@@ -347,32 +348,36 @@ export const actions: ActionTree<RootState, RootState> = {
   async fetchPaymentRequests({ dispatch }) {
     // TODO cache & paginate using timestamp
     const queryOpts = {
-      limit: 10,
+      limit: 30,
       startAt: 1,
       orderBy: [['timestamp', 'desc']],
     }
-    const transactions = await dispatch('queryDocuments', {
+    const paymentRequests = await dispatch('queryDocuments', {
       contract: 'PaymentRequest',
       typeLocator: 'PaymentRequest',
       queryOpts,
     })
-    console.log('transactions :>> ', transactions)
+    console.log('paymentRequests :>> ', paymentRequests)
 
     // No transactions, return early
-    if (!transactions) return []
+    if (!paymentRequests) return []
 
     const DAPIclient = await client.getDAPIClient()
-    console.log(
-      'getutxo',
-      await DAPIclient.getUTXO(transactions[0]?.data.encAddress)
-    )
-    const transactionsWithUTXOs = await Promise.all(
-      transactions.map(async (tx: any) => {
-        const utxos = await DAPIclient.getUTXO(tx.data.encAddress)
-        return { ...tx, utxos }
+
+    const paymentRequestsWithUTXOs = await Promise.all(
+      paymentRequests.map(async (pr: any) => {
+        const utxos = await DAPIclient.getUTXO(pr.data.encAddress)
+        const summary = await DAPIclient.getAddressSummary(pr.data.encAddress)
+        console.log('Getting UTXO for :>> ', pr.data.encAddress, utxos)
+        return {
+          ...pr,
+          summary,
+          utxos: { ...utxos, address: pr.data.encAddress },
+        }
       })
     )
-    return transactionsWithUTXOs
+    console.log('paymentRequestsWithUTXOs :>> ', paymentRequestsWithUTXOs)
+    return paymentRequestsWithUTXOs
   },
   async queryDocuments(
     { commit },
@@ -385,16 +390,17 @@ export const actions: ActionTree<RootState, RootState> = {
       },
     }
   ) {
-    console.log(`Querying documents for ${contract}.${typeLocator} and `, {
-      queryOpts,
-    })
+    // console.log(`Querying documents for ${contract}.${typeLocator} and `, {
+    // queryOpts,
+    // })
+    // await this.dispatch('isAccountReady') // Causes infinite loop
     // commit('setSyncing', true)
     try {
       const documents = await client.platform.documents.get(
         `${contract}.${typeLocator}`,
         queryOpts
       )
-      console.log('Query result:', { documents })
+      // console.log('Query result:', { documents })
       return documents
     } catch (e) {
       commit('showSnackbar', { text: e, color: 'red' })

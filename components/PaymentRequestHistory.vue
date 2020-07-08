@@ -9,6 +9,7 @@
             <th class="text-left">Amount</th>
             <th class="text-left">Status</th>
             <th class="text-left">Actions</th>
+            <th class="text-left">Info</th>
           </tr>
         </thead>
         <tbody>
@@ -39,6 +40,7 @@
                 {{ option }}
               </v-btn>
             </td>
+            <td>{{ info(idx) }}</td>
           </tr>
           <tr>
             <td>Feb 12th, 5:15pm</td>
@@ -101,20 +103,51 @@ export default Vue.extend({
       return new Date(timestamp * 1000)
     },
     amountPaid(idx: number) {
-      const tx: any = this.paymentRequests[idx]
-      const total = tx.utxos.items.reduce((acc: number, val: any) => {
+      const pr: any = this.paymentRequests[idx]
+      const total = pr.utxos.items.reduce((acc: number, val: any) => {
         return acc + val.satoshis
       }, 0)
       return total
     },
+    info(idx: number) {
+      const { amountPaid, paymentRequests } = this
+      const pr: any = paymentRequests[idx]
+      const infoT =
+        pr.data.encAddress +
+        ' ' +
+        pr.data.encSatoshis +
+        ' ' +
+        amountPaid(idx) +
+        ' ' +
+        // JSON.stringify(pr.utxos) +
+        pr.data.refId.slice(-4) +
+        ' ' +
+        pr.summary.txAppearances
+      console.log('infoT :>> ', infoT)
+      return infoT
+    },
     status(idx: number) {
       const { amountPaid, paymentRequests } = this
-      const tx: any = paymentRequests[idx]
-      if (tx.data.encSatoshis === amountPaid(idx).toString()) {
+      const pr: any = paymentRequests[idx]
+
+      if (pr.data.encSatoshis === amountPaid(idx).toString()) {
         return 'Paid'
-      } else {
-        return 'Pending'
       }
+
+      if (
+        amountPaid(idx) === 0 &&
+        pr.utxos.totalItems === 0 &&
+        pr.summary.txAppearances > 1
+      ) {
+        return 'Refunded'
+      }
+
+      if (
+        amountPaid(idx) === 0 &&
+        pr.utxos.totalItems === 0 &&
+        pr.summary.txAppearances === 0
+      )
+        return 'Pending'
     },
     options(idx: number) {
       const status = this.status(idx) // should be a computed
