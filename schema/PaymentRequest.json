@@ -73,6 +73,9 @@
                 "properties": [
                     {
                         "requesterUserId": "asc"
+                    },
+                    {
+                        "refId": "asc"
                     }
                 ]
             },
@@ -81,6 +84,9 @@
                 "properties": [
                     {
                         "requesteeUserId": "asc"
+                    },
+                    {
+                        "refId": "asc"
                     }
                 ]
             },
@@ -89,6 +95,9 @@
                 "properties": [
                     {
                         "timestamp": "desc"
+                    },
+                    {
+                        "refId": "asc"
                     }
                 ]
             }
@@ -151,6 +160,39 @@
             },
             "timestamp": {
                 "type": "integer"
+            }
+        },
+        "additionalProperties": false
+    },
+    "AddressIndex": {
+        "indices": [
+            {
+                "unique": false,
+                "properties": [
+                    {
+                        "$ownerId": "asc"
+                    }
+                ]
+            },
+            {
+                "unique": true,
+                "properties": [
+                    {
+                        "index": "asc"
+                    }
+                ]
+            }
+        ],
+        "required": [
+            "address",
+            "index"
+        ],
+        "properties": {
+            "address": {
+                "type": "string"
+            },
+            "index": {
+                "type": "number"
             }
         },
         "additionalProperties": false
