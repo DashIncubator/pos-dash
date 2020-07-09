@@ -103,6 +103,49 @@ export const actions: ActionTree<RootState, RootState> = {
       await dispatch('initWallet')
     }
   },
+  async getUntouchedAddress({ dispatch, state }) {
+    // Get untouchedAddress canditate
+    let untouchedAddress = client.account.getUnusedAddress()
+    console.log('untouchedAddress :>> ', untouchedAddress)
+
+    // Fetch latest published index doc
+    const queryOpts = {
+      limit: 1,
+      startAt: 1,
+      orderBy: [['index', 'desc']],
+      where: [['$ownerId', '==', state.identityId]],
+    }
+
+    const results = await dispatch('queryDocuments', {
+      contract: 'PaymentRequest',
+      typeLocator: 'AddressIndex',
+      queryOpts,
+    })
+
+    console.log('getUntouchedAddress results :>> ', results)
+    const prevIndex = results[0]?.data.index || 0
+
+    const nextIndex = Math.max(prevIndex + 1, untouchedAddress.index)
+    console.log('nextIndex :>> ', nextIndex)
+
+    // Get final untouchedAddress based on nextIndex comparison with latest doc
+    untouchedAddress = client.account.getAddress(nextIndex)
+    console.log('untouchedAddress after nextIndex :>> ', untouchedAddress)
+
+    const document = {
+      address: untouchedAddress.address,
+      index: untouchedAddress.index,
+    }
+
+    // Publish new index doc
+    await dispatch('submitDocument', {
+      contract: 'PaymentRequest',
+      typeLocator: 'AddressIndex',
+      document,
+    })
+
+    return untouchedAddress
+  },
   async initWallet({ state, commit }) {
     commit('clearClientError')
     commit('setClientWalletSynced', false)
@@ -113,7 +156,7 @@ export const actions: ActionTree<RootState, RootState> = {
       },
       apps: {
         PaymentRequest: {
-          contractId: '3Pd2SFbAqDF9G2RjcYmzbQuGEJ6xqF11ufEKpQEKNKxE',
+          contractId: 'GV7wcCaJDoWr58k4EqukgoGfqB1pjupnk5R51dqraePs',
         },
       },
     })
@@ -339,7 +382,8 @@ export const actions: ActionTree<RootState, RootState> = {
     //   .privateKey.toString()
 
     if (address === undefined) {
-      address = client.account.getUnusedAddress().address
+      address = await dispatch('getUntouchedAddress')
+      address = address.address
     }
 
     // const encAddress = encrypt(senderPrivateKey, address, recipientPublicKey)
@@ -372,11 +416,16 @@ export const actions: ActionTree<RootState, RootState> = {
   },
   async fetchPaymentRequests({ dispatch }) {
     // TODO cache & paginate using timestamp
+
     const queryOpts = {
       limit: 30,
       startAt: 1,
-      orderBy: [['timestamp', 'desc']],
+      orderBy: [
+        ['timestamp', 'desc'],
+        ['refId', 'asc'],
+      ],
     }
+
     const paymentRequests = await dispatch('queryDocuments', {
       contract: 'PaymentRequest',
       typeLocator: 'PaymentRequest',
@@ -386,6 +435,10 @@ export const actions: ActionTree<RootState, RootState> = {
 
     // No transactions, return early
     if (!paymentRequests) return []
+
+    // TODO dedupe by refId
+
+    // TODO add status information
 
     const DAPIclient = await client.getDAPIClient()
 

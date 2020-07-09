@@ -102,7 +102,11 @@ export default Vue.extend({
     this.paymentRequests = [...(await fetchPaymentRequests())]
   },
   methods: {
-    ...mapActions(['fetchPaymentRequests', 'refundPaymentRequest']),
+    ...mapActions([
+      'fetchPaymentRequests',
+      'refundPaymentRequest',
+      'requestPayment',
+    ]),
     date(timestamp: number) {
       return new Date(timestamp * 1000)
     },
@@ -141,7 +145,7 @@ export default Vue.extend({
       if (
         amountPaid(idx) === 0 &&
         pr.utxos.totalItems === 0 &&
-        pr.summary.txAppearances > 1
+        pr.summary.txAppearances + pr.summary.unconfirmedAppearances > 1
       ) {
         return 'Refunded'
       }
@@ -158,16 +162,36 @@ export default Vue.extend({
       if (status === 'Pending') {
         return ['Amend', 'Cancel']
       }
-      if (status === 'Paid') {
+      if (true) {
         return ['Refund', 'Amend']
       }
       if (status === 'Cancelled') {
         return ['']
       }
     },
-    execOption(option: any, idx: number) {
+    async execOption(option: any, idx: number) {
       if (option === 'Refund') {
         const requestDocument = this.paymentRequests[idx]
+
+        const {
+          requesteeUserId,
+          requesteeUserName,
+          memo,
+          refId,
+          encAddress,
+        } = requestDocument.data
+
+        await this.requestPayment({
+          requesteeUserId,
+          requesteeUserName,
+          satoshis: 0,
+          memo: memo + ' -> Refund',
+          refId,
+          fiatAmount: 0,
+          fiatSymbol: '',
+          address: encAddress,
+        })
+
         this.refundPaymentRequest({ requestDocument })
       }
       if (option === 'Amend') {
