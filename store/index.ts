@@ -438,14 +438,50 @@ export const actions: ActionTree<RootState, RootState> = {
 
     // TODO dedupe by refId
 
+    const collatedRequests: any = {}
+    for (const item of paymentRequests) {
+      const doc = item.toJSON()
+      const { refId } = doc
+
+      console.log(doc.memo, doc.encFiatAmount, doc.refId)
+
+      collatedRequests[refId] = collatedRequests[refId]
+        ? [...collatedRequests[refId], doc]
+        : [doc]
+    }
+    console.log(collatedRequests)
+
+    const sortedRequests = []
+    for (const refId in collatedRequests) {
+      const docs = collatedRequests[refId]
+      const lastTimestamp = docs[0].timestamp
+      const firstTimestamp = docs[docs.length - 1].timestamp
+
+      sortedRequests.push({
+        firstTimestamp,
+        lastTimestamp,
+        countDocs: docs.length,
+        docs,
+      })
+    }
+
+    sortedRequests.sort(function (a, b) {
+      return b.lastTimestamp - a.lastTimestamp
+    })
+
+    console.dir(sortedRequests)
+    sortedRequests.forEach((doc) => console.log(doc))
+
     // TODO add status information
 
     const DAPIclient = await client.getDAPIClient()
 
     const paymentRequestsWithUTXOs = await Promise.all(
-      paymentRequests.map(async (pr: any) => {
-        const utxos = await DAPIclient.getUTXO(pr.data.encAddress)
-        const summary = await DAPIclient.getAddressSummary(pr.data.encAddress)
+      sortedRequests.map(async (pr: any) => {
+        const utxos = await DAPIclient.getUTXO(pr.docs[0].encAddress)
+        const summary = await DAPIclient.getAddressSummary(
+          pr.docs[0].encAddress
+        )
         // console.log('Getting UTXO for :>> ', pr.data.encAddress, utxos)
         return {
           ...pr,

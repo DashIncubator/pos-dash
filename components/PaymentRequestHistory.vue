@@ -17,18 +17,18 @@
             <td>
               <timeago
                 class="subtitle-1"
-                :datetime="date(paymentRequest.data.timestamp)"
+                :datetime="date(paymentRequest.docs[0].timestamp)"
                 :auto-update="60"
               />
             </td>
-            <td>{{ paymentRequest.data.requesteeUserName }}</td>
+            <td>{{ paymentRequest.docs[0].requesteeUserName }}</td>
             <td>
               {{
-                paymentRequest.data.encFiatAmount === '0'
+                paymentRequest.docs[0].encFiatAmount === '0'
                   ? '-'
-                  : paymentRequest.data.encFiatAmount
+                  : paymentRequest.docs[0].encFiatAmount
               }}
-              {{ paymentRequest.data.encFiatSymbol }}
+              {{ paymentRequest.docs[0].encFiatSymbol }}
             </td>
             <td>{{ status(idx) }}</td>
             <td>
@@ -99,7 +99,7 @@ export default Vue.extend({
   },
   async mounted() {
     const { fetchPaymentRequests } = this
-    this.paymentRequests = [...(await fetchPaymentRequests())]
+    this.paymentRequests = await fetchPaymentRequests()
   },
   methods: {
     ...mapActions([
@@ -111,34 +111,41 @@ export default Vue.extend({
       return new Date(timestamp * 1000)
     },
     amountPaid(idx: number) {
-      const pr: any = this.paymentRequests[idx]
-      const total = pr.utxos.items.reduce((acc: number, val: any) => {
-        return acc + val.satoshis
-      }, 0)
+      // const pr: any = {this.paymentRequests[idx].docs[0]
+      const total = this.paymentRequests[idx].utxos.items.reduce(
+        (acc: number, val: any) => {
+          return acc + val.satoshis
+        },
+        0
+      )
       return total
     },
     info(idx: number) {
       const { amountPaid, paymentRequests } = this
-      const pr: any = paymentRequests[idx]
+      const pr: any = {
+        ...paymentRequests[idx].docs[0],
+        summary: paymentRequests[idx].summary,
+        utxos: paymentRequests[idx].utxos,
+      }
       const infoT =
-        pr.data.encAddress +
+        pr.encAddress +
         ' ' +
-        pr.data.encSatoshis +
+        pr.encSatoshis +
         ' ' +
         amountPaid(idx) +
         ' ' +
         // JSON.stringify(pr.utxos) +
-        pr.data.refId.slice(-4) +
+        pr.refId.slice(-4) +
         ' ' +
         pr.summary.txAppearances
       return infoT
     },
     status(idx: number) {
       const { amountPaid, paymentRequests } = this
-      const pr: any = paymentRequests[idx]
+      const pr: any = paymentRequests[idx].docs[0]
 
-      if (pr.data.encSatoshis === '0') return 'Cancelled' // Must be first to return
-      if (pr.data.encSatoshis === amountPaid(idx).toString()) {
+      if (pr.encSatoshis === '0') return 'Cancelled' // Must be first to return
+      if (pr.encSatoshis === amountPaid(idx).toString()) {
         return 'Paid'
       }
 
@@ -162,7 +169,7 @@ export default Vue.extend({
       if (status === 'Pending') {
         return ['Amend', 'Cancel']
       }
-      if (true) {
+      if (status === 'Paid') {
         return ['Refund', 'Amend']
       }
       if (status === 'Cancelled') {
@@ -171,7 +178,7 @@ export default Vue.extend({
     },
     async execOption(option: any, idx: number) {
       if (option === 'Refund') {
-        const requestDocument = this.paymentRequests[idx]
+        const requestDocument = this.paymentRequests[idx].docs[0]
 
         const {
           requesteeUserId,
@@ -195,15 +202,15 @@ export default Vue.extend({
         this.refundPaymentRequest({ requestDocument })
       }
       if (option === 'Amend') {
-        const refId = this.paymentRequests[idx].id
+        const refId = this.paymentRequests[idx].docs[0].$id
 
         const {
           requesteeUserName,
           requesteeUserId,
           encFiatAmount,
-        } = this.paymentRequests[idx].data
+        } = this.paymentRequests[idx].docs[0]
 
-        const prevDocument = this.paymentRequests[idx]
+        const prevDocument = this.paymentRequests[idx].docs[0]
 
         const POSOpts = {
           refId,
