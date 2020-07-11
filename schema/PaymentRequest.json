@@ -189,6 +189,14 @@
                         "index": "asc"
                     }
                 ]
+            },
+            {
+                "unique": true,
+                "properties": [
+                    {
+                        "address": "asc"
+                    }
+                ]
             }
         ],
         "required": [

@@ -106,7 +106,7 @@ export const actions: ActionTree<RootState, RootState> = {
   async getUntouchedAddress({ dispatch, state }) {
     // Get untouchedAddress canditate
     let untouchedAddress = client.account.getUnusedAddress()
-    console.log('untouchedAddress :>> ', untouchedAddress)
+    console.log('untouchedAddress candidate :>> ', untouchedAddress)
 
     // Fetch latest published index doc
     const queryOpts = {
@@ -122,7 +122,7 @@ export const actions: ActionTree<RootState, RootState> = {
       queryOpts,
     })
 
-    console.log('getUntouchedAddress results :>> ', results)
+    console.log('getUntouchedAddress doc results :>> ', results)
     const prevIndex = results[0]?.data.index || 0
 
     const nextIndex = Math.max(prevIndex + 1, untouchedAddress.index)
@@ -156,7 +156,7 @@ export const actions: ActionTree<RootState, RootState> = {
       },
       apps: {
         PaymentRequest: {
-          contractId: 'WSfquHrEWxjZhYVtbSWJzqmUVAUYuYWK4v3aDmu1m5S',
+          contractId: '4NLLp1Fs8bgz6LwUXQbzQH11ugZv7z1kca1heBZoeWca',
         },
       },
     })
@@ -489,14 +489,12 @@ export const actions: ActionTree<RootState, RootState> = {
     // Add transaction and status info
     const paymentRequestsWithUTXOs = await Promise.all(
       sortedRequests.map(async (pr: any) => {
-        const utxos = await DAPIclient.getUTXO(pr.docs[0].encAddress)
-        const summary = await DAPIclient.getAddressSummary(
+        const utxos = await dispatch('getUTXO', pr.docs[0].encAddress)
+        const summary = await dispatch(
+          'getAddressSummary',
           pr.docs[0].encAddress
         )
-        summary.totalBalanceSat =
-          summary.balanceSat + summary.unconfirmedBalanceSat
-        summary.totalTxAppearances =
-          summary.txAppearances + summary.unconfirmedAppearances
+
         // console.log('Getting UTXO for :>> ', pr.encAddress, utxos)
 
         // Add the payment request status
@@ -581,6 +579,12 @@ export const actions: ActionTree<RootState, RootState> = {
   async getAddressSummary({ state }, address: string) {
     const DAPIclient = await client.getDAPIClient()
     const summary = await DAPIclient.getAddressSummary(address)
+
+    summary.totalBalanceSat = summary.balanceSat + summary.unconfirmedBalanceSat
+
+    summary.totalTxAppearances =
+      summary.txAppearances + summary.unconfirmedAppearances
+
     return summary
   },
 }
