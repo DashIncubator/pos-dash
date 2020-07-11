@@ -415,7 +415,7 @@ export default Vue.extend({
       // )
       const summary = await this.getAddressSummary(document.encAddress)
 
-      this.satoshisReceived = summary.unconfirmedBalanceSat
+      this.satoshisReceived = summary.totalBalanceSat
       if (this.satoshisReceived >= document.encSatoshis) {
         this.isPaid = true
         setTimeout(() => {
@@ -443,11 +443,15 @@ export default Vue.extend({
         memo,
         refId,
         requestFiat,
+        prevDocument,
       } = this
       console.log('fiatAmount :>> ', fiatAmount)
       console.log('fiatSymbol :>> ', fiatSymbol)
       console.log('memo :>> ', memo)
       console.log('customer :>> ', customer)
+
+      const address = prevDocument?.encAddress
+      console.log('previous Address :>> ', address)
       const [requesteeUserName, requesteeUserId] = customer.split(':')
       this.document = await requestFiat({
         requesteeUserId,
@@ -456,6 +460,7 @@ export default Vue.extend({
         fiatSymbol,
         refId,
         memo,
+        address,
       })
       console.log('request fiat document :>> ', this.document)
       this.pollWaitForPayment()

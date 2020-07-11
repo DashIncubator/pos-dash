@@ -326,6 +326,7 @@ export const actions: ActionTree<RootState, RootState> = {
       fiatSymbol,
       memo = '',
       refId = '',
+      address = undefined
     }
   ) {
     console.log('memo :>> ', memo)
@@ -344,6 +345,7 @@ export const actions: ActionTree<RootState, RootState> = {
       fiatSymbol,
       memo,
       refId,
+      address
     })
     return document
   },
