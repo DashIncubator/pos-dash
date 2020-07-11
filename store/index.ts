@@ -326,7 +326,7 @@ export const actions: ActionTree<RootState, RootState> = {
       fiatSymbol,
       memo = '',
       refId = '',
-      address = undefined
+      address = undefined,
     }
   ) {
     console.log('memo :>> ', memo)
@@ -345,7 +345,7 @@ export const actions: ActionTree<RootState, RootState> = {
       fiatSymbol,
       memo,
       refId,
-      address
+      address,
     })
     return document
   },
@@ -437,7 +437,7 @@ export const actions: ActionTree<RootState, RootState> = {
     })
     return document
   },
-  async fetchPaymentRequests({ dispatch }) {
+  async fetchPaymentRequests({ dispatch, state }) {
     // TODO cache & paginate using timestamp
 
     const queryOpts = {
@@ -447,6 +447,7 @@ export const actions: ActionTree<RootState, RootState> = {
         ['timestamp', 'desc'],
         ['refId', 'asc'],
       ],
+      where: [['requesterUserId', '==', state.name.docId]],
     }
 
     const paymentRequests = await dispatch('queryDocuments', {
@@ -494,8 +495,6 @@ export const actions: ActionTree<RootState, RootState> = {
 
     console.dir(sortedRequests)
     sortedRequests.forEach((doc) => console.log(doc))
-
-    const DAPIclient = await client.getDAPIClient()
 
     // Add transaction and status info
     const paymentRequestsWithUTXOs = await Promise.all(

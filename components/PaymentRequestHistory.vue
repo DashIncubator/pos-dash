@@ -88,6 +88,8 @@
 import Vue from 'vue'
 import { mapActions } from 'vuex'
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+
 export default Vue.extend({
   data: () => {
     const data: {
@@ -97,16 +99,24 @@ export default Vue.extend({
     }
     return data
   },
-  async mounted() {
-    const { fetchPaymentRequests } = this
-    this.paymentRequests = await fetchPaymentRequests()
+  created() {
+    this.refreshPaymentRequests()
   },
   methods: {
     ...mapActions([
       'fetchPaymentRequests',
       'refundPaymentRequest',
       'requestPayment',
+      'cancelPaymentRequest',
     ]),
+    async refreshPaymentRequests() {
+      this.paymentRequests = await this.fetchPaymentRequests()
+    },
+    // async pollFetchPaymentRequests() {
+    //   this.paymentRequests = await this.fetchPaymentRequests()
+    //   await sleep(2000)
+    //   this.pollFetchPaymentRequests()
+    // },
     date(timestamp: number) {
       return new Date(timestamp * 1000)
     },
@@ -156,6 +166,18 @@ export default Vue.extend({
       }
     },
     async execOption(option: any, idx: number) {
+      console.log('exec option', option)
+      if (option === 'Cancel') {
+        console.log('pending')
+        const requestDocument = this.paymentRequests[idx].docs[0]
+        await this.cancelPaymentRequest(requestDocument)
+        this.$store.commit('showSnackbar', {
+          text: `Cancelled PaymentRequest ${requestDocument.refId}`,
+          color: 'success',
+        })
+        await sleep(1000)
+        this.refreshPaymentRequests()
+      }
       if (option === 'Refund') {
         const requestDocument = this.paymentRequests[idx].docs[0]
 
@@ -178,7 +200,9 @@ export default Vue.extend({
           address: encAddress,
         })
 
-        this.refundPaymentRequest({ requestDocument })
+        await this.refundPaymentRequest({ requestDocument })
+        await sleep(1000)
+        this.refreshPaymentRequests()
       }
       if (option === 'Amend') {
         const refId = this.paymentRequests[idx].docs[0].refId
