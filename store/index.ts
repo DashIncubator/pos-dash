@@ -206,9 +206,10 @@ export const actions: ActionTree<RootState, RootState> = {
     { requestDocument, satoshis = undefined }
   ) {
     try {
+      console.log('requestDocument :>> ', requestDocument)
       console.log('satoshis in refundPaymentRequest :>> ', satoshis)
       // Received Address: where the PaymentRequest received the funds we are about to send back
-      const receivedAddress = requestDocument.data.encAddress
+      const receivedAddress = requestDocument.encAddress
 
       // Get refund utxos, privateKeys and satoshis amount
       const [account, UTXO] = await Promise.all([
@@ -235,7 +236,7 @@ export const actions: ActionTree<RootState, RootState> = {
       // Refund Address: Get the address where to send the refund
       const refundAddressDoc = await client.platform.documents.getById(
         'PaymentRequest.PaymentIntent',
-        requestDocument.data.refId
+        requestDocument.refId
       )
       console.log('refundAddressDocs :>> ', refundAddressDoc)
       const refundAddress = refundAddressDoc.data.encRefundAddress
@@ -353,8 +354,19 @@ export const actions: ActionTree<RootState, RootState> = {
       const satoshis = Unit.fromBTC(dashAmount).toSatoshis()
       return satoshis
     } catch (e) {
-      commit('showSnackbar', { text: e.message })
-      throw e
+      commit('showSnackbar', {
+        text: 'Using static conversion rate, API unavailable',
+      })
+      // throw e
+      console.error(e)
+      const fiatConversionRate = 72
+      console.log('static fiatConversionRate :>> ', fiatConversionRate)
+
+      const dashAmount = fiatAmount / fiatConversionRate
+      console.log('dashAmount :>> ', dashAmount)
+
+      const satoshis = Unit.fromBTC(dashAmount).toSatoshis()
+      return satoshis
     }
   },
   async requestPayment(
@@ -418,7 +430,7 @@ export const actions: ActionTree<RootState, RootState> = {
     // TODO cache & paginate using timestamp
 
     const queryOpts = {
-      limit: 30,
+      limit: 100,
       startAt: 1,
       orderBy: [
         ['timestamp', 'desc'],
@@ -455,10 +467,10 @@ export const actions: ActionTree<RootState, RootState> = {
     for (const refId in collatedRequests) {
       const docs = collatedRequests[refId]
       const lastTimestamp = docs[0].timestamp
-      const firstTimestamp = docs[docs.length - 1].timestamp
+      // const firstTimestamp = docs[docs.length - 1].timestamp
 
       sortedRequests.push({
-        firstTimestamp,
+        // firstTimestamp,
         lastTimestamp,
         countDocs: docs.length,
         docs,
@@ -472,21 +484,57 @@ export const actions: ActionTree<RootState, RootState> = {
     console.dir(sortedRequests)
     sortedRequests.forEach((doc) => console.log(doc))
 
-    // TODO add status information
-
     const DAPIclient = await client.getDAPIClient()
 
+    // Add transaction and status info
     const paymentRequestsWithUTXOs = await Promise.all(
       sortedRequests.map(async (pr: any) => {
         const utxos = await DAPIclient.getUTXO(pr.docs[0].encAddress)
         const summary = await DAPIclient.getAddressSummary(
           pr.docs[0].encAddress
         )
-        // console.log('Getting UTXO for :>> ', pr.data.encAddress, utxos)
+        summary.totalBalanceSat =
+          summary.balanceSat + summary.unconfirmedBalanceSat
+        summary.totalTxAppearances =
+          summary.txAppearances + summary.unconfirmedAppearances
+        // console.log('Getting UTXO for :>> ', pr.encAddress, utxos)
+
+        // Add the payment request status
+        let status
+
+        const requestedSatoshis = parseInt(pr.docs[0].encSatoshis)
+
+        if (requestedSatoshis === 0 && summary.totalTxAppearances === 0) {
+          status = 'Cancelled'
+        } else if (
+          summary.totalBalanceSat === 0 &&
+          summary.totalTxAppearances > 1
+        ) {
+          status = 'Refunded'
+        } else if (
+          summary.totalBalanceSat === 0 &&
+          summary.txAppearances === 0
+        ) {
+          status = 'Pending'
+        }
+        // TODO once deductFee is fixed, should be 0
+        else if (requestedSatoshis - summary.totalBalanceSat < 1000) {
+          status = 'Paid'
+          // if (summary.txAppearances > 1) status = 'Amended'
+        } else if (summary.totalBalanceSat > requestedSatoshis) {
+          status = 'Overpaid'
+        } else if (
+          summary.totalBalanceSat < requestedSatoshis &&
+          summary.totalBalanceSat > 0
+        ) {
+          status = 'Underpaid'
+        }
+
         return {
           ...pr,
           summary,
           utxos,
+          status,
         }
       })
     )
@@ -504,9 +552,9 @@ export const actions: ActionTree<RootState, RootState> = {
       },
     }
   ) {
-    // console.log(`Querying documents for ${contract}.${typeLocator} and `, {
-    // queryOpts,
-    // })
+    console.log(`Querying documents for ${contract}.${typeLocator} and `, {
+      queryOpts,
+    })
     // await this.dispatch('isAccountReady') // Causes infinite loop
     // commit('setSyncing', true)
     try {
@@ -514,7 +562,7 @@ export const actions: ActionTree<RootState, RootState> = {
         `${contract}.${typeLocator}`,
         queryOpts
       )
-      // console.log('Query result:', { documents })
+      console.log('Query result:', { documents })
       return documents
     } catch (e) {
       commit('showSnackbar', { text: e, color: 'red' })

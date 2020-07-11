@@ -30,7 +30,7 @@
               }}
               {{ paymentRequest.docs[0].encFiatSymbol }}
             </td>
-            <td>{{ status(idx) }}</td>
+            <td>{{ paymentRequest.status }}</td>
             <td>
               <v-btn
                 v-for="(option, idy) in options(idx)"
@@ -140,37 +140,16 @@ export default Vue.extend({
         pr.summary.txAppearances
       return infoT
     },
-    status(idx: number) {
-      const { amountPaid, paymentRequests } = this
-      const pr: any = paymentRequests[idx].docs[0]
-
-      if (pr.encSatoshis === '0') return 'Cancelled' // Must be first to return
-      if (pr.encSatoshis === amountPaid(idx).toString()) {
-        return 'Paid'
-      }
-
-      if (
-        amountPaid(idx) === 0 &&
-        pr.utxos.totalItems === 0 &&
-        pr.summary.txAppearances + pr.summary.unconfirmedAppearances > 1
-      ) {
-        return 'Refunded'
-      }
-
-      if (
-        amountPaid(idx) === 0 &&
-        pr.utxos.totalItems === 0 &&
-        pr.summary.txAppearances === 0
-      )
-        return 'Pending'
-    },
     options(idx: number) {
-      const status = this.status(idx) // should be a computed
+      const { status } = this.paymentRequests[idx]
       if (status === 'Pending') {
         return ['Amend', 'Cancel']
       }
       if (status === 'Paid') {
         return ['Refund', 'Amend']
+      }
+      if (status === 'Refunded') {
+        return ['Amend']
       }
       if (status === 'Cancelled') {
         return ['']
@@ -186,7 +165,7 @@ export default Vue.extend({
           memo,
           refId,
           encAddress,
-        } = requestDocument.data
+        } = requestDocument
 
         await this.requestPayment({
           requesteeUserId,
@@ -202,7 +181,7 @@ export default Vue.extend({
         this.refundPaymentRequest({ requestDocument })
       }
       if (option === 'Amend') {
-        const refId = this.paymentRequests[idx].docs[0].$id
+        const refId = this.paymentRequests[idx].docs[0].refId
 
         const {
           requesteeUserName,

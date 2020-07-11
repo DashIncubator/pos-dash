@@ -196,7 +196,12 @@
       label="Order Amount"
       type="number"
     ></v-text-field>
-    <v-btn color="success" @click="sendRequest">{{ confirmCaption }}</v-btn>
+    <v-btn
+      :disabled="!confirmCaption.enabled"
+      :color="confirmCaption.color || 'success'"
+      @click="sendRequest"
+      >{{ confirmCaption.text }}</v-btn
+    >
     <v-btn color="error" nuxt to="/">Cancel</v-btn>
     <v-overlay :value="waitingForPayment">
       <!-- <v-overlay> -->
@@ -308,15 +313,26 @@ export default Vue.extend({
     // eslint-disable-next-line vue/return-in-computed-property
     confirmCaption() {
       const fiatDifference =
-        this.fiatAmount - this.prevDocument.data?.encFiatAmount
+        Math.round(
+          this.fiatAmount * 100 - this.prevDocument?.encFiatAmount * 100
+        ) / 100
       if (fiatDifference < 0) {
         // @ts-ignore
-        return `Refund: ${fiatDifference} ${this.fiatSymbol}`
+        return {
+          color: 'blue',
+          text: `Refund: ${fiatDifference} ${this.fiatSymbol}`,
+          enabled: true,
+        }
       } else if (fiatDifference > 0) {
         // @ts-ignore
-        return `Request: ${fiatDifference} ${this.fiatSymbol}`
+        return {
+          text: `Request: ${fiatDifference} ${this.fiatSymbol}`,
+          enabled: true,
+        }
+      } else if (this.fiatAmount > 0) {
+        return { text: 'Confirm', enabled: true }
       } else {
-        return 'Confirm'
+        return { text: 'Confirm' }
       }
     },
   },
@@ -340,22 +356,27 @@ export default Vue.extend({
     async sendRequest() {
       console.log('this.mode :>> ', this.mode)
       if (this.mode === 'Amend') {
-        const { fiatAmount, memo } = this
+        const { fiatAmount, memo, prevDocument } = this
 
         const {
           requesteeUserId,
           requesteeUserName,
           refId,
-          encFiatAmount,
           encSatoshis,
           encFiatSymbol,
           encAddress,
-        } = this.prevDocument.data
+        } = prevDocument
 
+        if (fiatAmount > parseFloat(prevDocument.encFiatAmount)) {
+          this.reqPayment()
+          return
+        }
+
+        const prevFiatAmount = prevDocument.encFiatAmount
         // Use original fiat conversion rate
-        const rate = parseFloat(encFiatAmount) / parseFloat(encSatoshis)
+        const rate = parseFloat(prevFiatAmount) / parseFloat(encSatoshis)
         console.log('rate :>> ', rate)
-        const refundSatoshis = Math.floor(fiatAmount / rate)
+        const refundSatoshis = Math.floor((prevFiatAmount - fiatAmount) / rate)
         console.log('refundSatoshis :>> ', refundSatoshis)
         const satoshis = encSatoshis - refundSatoshis
         console.log('satoshis :>> ', satoshis)
