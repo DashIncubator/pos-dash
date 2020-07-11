@@ -105,8 +105,8 @@ export const actions: ActionTree<RootState, RootState> = {
   },
   async getUntouchedAddress({ dispatch, state }) {
     // Get untouchedAddress canditate
-    let untouchedAddress = client.account.getUnusedAddress()
-    console.log('untouchedAddress candidate :>> ', untouchedAddress)
+    let untouchedAddressCandidate = client.account.getUnusedAddress()
+    console.log('untouchedAddress candidate :>> ', untouchedAddressCandidate)
 
     // Fetch latest published index doc
     const queryOpts = {
@@ -125,16 +125,25 @@ export const actions: ActionTree<RootState, RootState> = {
     console.log('getUntouchedAddress doc results :>> ', results)
     const prevIndex = results[0]?.data.index || 0
 
-    const nextIndex = Math.max(prevIndex + 1, untouchedAddress.index)
+    let nextIndex = Math.max(prevIndex + 1, untouchedAddressCandidate.index)
     console.log('nextIndex :>> ', nextIndex)
 
-    // Get final untouchedAddress based on nextIndex comparison with latest doc
-    untouchedAddress = client.account.getAddress(nextIndex)
-    console.log('untouchedAddress after nextIndex :>> ', untouchedAddress)
+    let used = true
+    while (used) {
+      // Get final untouchedAddress based on nextIndex comparison with latest doc
+      untouchedAddressCandidate = client.account.getAddress(nextIndex)
+      console.log(
+        'untouchedAddress after nextIndex :>> ',
+        nextIndex,
+        untouchedAddressCandidate
+      )
+      used = untouchedAddressCandidate.used
+      nextIndex = ++nextIndex
+    }
 
     const document = {
-      address: untouchedAddress.address,
-      index: untouchedAddress.index,
+      address: untouchedAddressCandidate.address,
+      index: untouchedAddressCandidate.index,
     }
 
     // Publish new index doc
@@ -144,7 +153,7 @@ export const actions: ActionTree<RootState, RootState> = {
       document,
     })
 
-    return untouchedAddress
+    return untouchedAddressCandidate
   },
   async initWallet({ state, commit }) {
     commit('clearClientError')
