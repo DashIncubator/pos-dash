@@ -94,6 +94,14 @@
                 "unique": false,
                 "properties": [
                     {
+                        "refId": "asc"
+                    }
+                ]
+            },
+            {
+                "unique": false,
+                "properties": [
+                    {
                         "timestamp": "desc"
                     },
                     {

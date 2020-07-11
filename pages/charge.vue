@@ -320,12 +320,14 @@ export default Vue.extend({
         // @ts-ignore
         return {
           color: 'blue',
+          // @ts-ignore
           text: `Refund: ${fiatDifference} ${this.fiatSymbol}`,
           enabled: true,
         }
       } else if (fiatDifference > 0) {
         // @ts-ignore
         return {
+          // @ts-ignore
           text: `Request: ${fiatDifference} ${this.fiatSymbol}`,
           enabled: true,
         }
