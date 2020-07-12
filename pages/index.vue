@@ -11,7 +11,7 @@
         </v-col>
         <v-col
           ><v-card elevation="0"
-            ><v-card-title>Dash Donuts</v-card-title>
+            ><v-card-title> {{ $store.state.name.label }} </v-card-title>
             <v-card-text
               >Ask the customer to scan the QR Code to initiate a Payment
               Request</v-card-text

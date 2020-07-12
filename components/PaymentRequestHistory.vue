@@ -112,12 +112,12 @@ export default Vue.extend({
         pr.encAddress +
         ' ' +
         pr.encSatoshis +
-        ' ' +
+        '/' +
         amountPaid(idx) +
-        ' ' +
+        ' intent:' +
         // JSON.stringify(pr.utxos) +
         pr.refId.slice(-4) +
-        ' ' +
+        ' txs:' +
         pr.summary.txAppearances
       return infoT
     },
@@ -139,8 +139,11 @@ export default Vue.extend({
     async execOption(option: any, idx: number) {
       console.log('exec option', option)
       if (option === 'Cancel') {
-        console.log('pending')
         const requestDocument = this.paymentRequests[idx].docs[0]
+        this.$store.commit('showSnackbar', {
+          text: `Cancelling ${requestDocument.refId}`,
+          color: 'blue',
+        })
         await this.cancelPaymentRequest(requestDocument)
         this.$store.commit('showSnackbar', {
           text: `Cancelled PaymentRequest ${requestDocument.refId}`,
@@ -151,6 +154,11 @@ export default Vue.extend({
       }
       if (option === 'Refund') {
         const requestDocument = this.paymentRequests[idx].docs[0]
+
+        this.$store.commit('showSnackbar', {
+          text: `Refunding ${requestDocument.refId}`,
+          color: 'blue',
+        })
 
         const {
           requesteeUserId,

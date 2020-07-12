@@ -1,6 +1,6 @@
 <template>
   <v-app>
-    <v-main>
+    <v-content>
       <v-container>
         <nuxt />
         <v-overlay
@@ -58,7 +58,7 @@
           </v-btn>
         </v-snackbar>
       </v-container>
-    </v-main>
+    </v-content>
   </v-app>
 </template>
 
