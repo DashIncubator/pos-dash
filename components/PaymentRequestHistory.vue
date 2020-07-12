@@ -1,6 +1,9 @@
 <template>
   <div>
-    <v-simple-table>
+    <v-btn fab class="mt-10" small @click="refreshPaymentRequests"
+      ><v-icon>mdi-refresh </v-icon></v-btn
+    >
+    <v-simple-table class="mt-10">
       <template v-slot:default>
         <thead>
           <tr>
@@ -46,38 +49,6 @@
             </td>
             <td>{{ info(idx) }}</td>
           </tr>
-          <tr>
-            <td>Feb 12th, 5:15pm</td>
-            <td>Alice</td>
-            <td>$5</td>
-            <td>Pending</td>
-            <td>Amend, Cancel</td>
-          </tr>
-          <tr>
-            <td>Feb 12th, 5:15pm</td>
-            <td>Bob</td>
-            <td>$3.50</td>
-            <td>Paid</td>
-            <td>Refund, Amend</td>
-          </tr>
-          <tr>
-            <td>Feb 12th, 5:15pm</td>
-            <td>Carol</td>
-            <td>$4.50</td>
-            <td>Refunded</td>
-            <td>Amend</td>
-          </tr>
-          <tr>
-            <td>Feb 12th, 5:15pm</td>
-            <td>David</td>
-            <td>$4.50</td>
-            <td>Cancelled</td>
-            <td>-</td>
-          </tr>
-          <!-- <tr v-for="item in desserts" :key="item.name">
-            <td>{{ item.name }}</td>
-            <td>{{ item.calories }}</td>
-          </tr> -->
         </tbody>
       </template>
     </v-simple-table>

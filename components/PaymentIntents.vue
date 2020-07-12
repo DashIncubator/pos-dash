@@ -119,7 +119,7 @@ export default Vue.extend({
           map[obj.data.requesteeUserId] = obj.toJSON()
           return map
         }, {})
-      await sleep(2000)
+      await sleep(1000)
       this.pollPaymentIntents()
     },
   },

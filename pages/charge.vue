@@ -205,11 +205,11 @@
     <v-btn color="error" nuxt to="/">Cancel</v-btn>
     <v-overlay :value="waitingForPayment">
       <!-- <v-overlay> -->
-      <v-card color="#012060" min-width="275px"
+      <v-card color="#012060" min-width="285px"
         ><v-card-title class="text-center mx-auto"
-          >Waiting for payment</v-card-title
+          >Payment Request</v-card-title
         >
-        <div v-if="!isPaid" class="loadcontainer">
+        <div v-if="!isPaid" class="loadcontainer mt-n8">
           <div class="holder">
             <div class="box"></div>
           </div>
@@ -221,7 +221,7 @@
           </div>
         </div>
         <v-spacer style="height: 40px;" />
-        <v-spacer v-if="!isPaid" style="height: 100px;" />
+        <v-spacer v-if="!isPaid" style="height: 120px;" />
         <svg
           v-if="isPaid"
           class="checkmark"
@@ -241,12 +241,15 @@
             d="M14.1 27.2l7.1 7.2 16.7-16.8"
           />
         </svg>
-        <v-spacer style="height: 40px;" />
-        <v-card-text class="text-center"
-          ><span v-if="satoshisReceived > 0"
-            >Received {{ satoshisReceived }} / {{ satoshisRequested }}</span
-          >{{ refId }}</v-card-text
-        >
+        <v-spacer style="height: 50px;" />
+        <v-card-text class="text-center">
+          From: {{ customer.split(':')[0] }} <br />
+          Amount: {{ fiatAmount }} {{ fiatSymbol }}<br />
+          <span v-if="satoshisReceived > 0">
+            Received {{ dashReceived }} / {{ dashRequested }} Dash</span
+          >
+          <span v-else>Waiting .. </span>
+        </v-card-text>
         <v-card-actions>
           <v-btn
             v-if="!isPaid"
@@ -267,7 +270,9 @@
 <script lang="ts">
 import Vue from 'vue'
 import { mapActions } from 'vuex'
+import { Unit } from '@dashevo/dashcore-lib'
 import NameAutocomplete from '../components/NameAutocomplete.vue'
+
 // const timestamp = () => Math.floor(Date.now() / 1000)
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
 
@@ -302,6 +307,12 @@ export default Vue.extend({
     return data
   },
   computed: {
+    dashReceived() {
+      return Unit.fromSatoshis(this.satoshisReceived).toBTC()
+    },
+    dashRequested() {
+      return Unit.fromSatoshis(this.satoshisRequested).toBTC()
+    },
     fiatSymbol: {
       get(): string {
         return this.$store.state.pos.currency
@@ -483,6 +494,7 @@ body {
 .loadcontainer {
   position: absolute;
   top: 50%;
+  /* top: 130px; */
   left: 50%;
   -webkit-transform: translate(-50%, -50%);
   transform: translate(-50%, -50%);
