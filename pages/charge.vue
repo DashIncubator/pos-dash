@@ -19,6 +19,7 @@
         v-model="fiatAmount"
         label="Order Amount"
         type="number"
+        step="0.01"
         min="0"
       ></v-text-field>
       <v-overflow-btn
@@ -343,14 +344,14 @@ export default Vue.extend({
         return {
           color: 'blue',
           // @ts-ignore
-          text: `Refund: ${fiatDifference} ${this.fiatSymbol}`,
+          text: `Decrease: ${fiatDifference} ${this.fiatSymbol}`,
           enabled: true,
         }
       } else if (fiatDifference > 0) {
         // @ts-ignore
         return {
           // @ts-ignore
-          text: `Request: ${fiatDifference} ${this.fiatSymbol}`,
+          text: `Increase: ${fiatDifference} ${this.fiatSymbol}`,
           enabled: true,
         }
       } else if (this.fiatAmount > 0) {
@@ -373,7 +374,6 @@ export default Vue.extend({
     ...mapActions([
       'requestFiat',
       'requestPayment',
-      'cancelPaymentRequest',
       'getAddressSummary',
       'refundPaymentRequest',
     ]),
@@ -391,19 +391,38 @@ export default Vue.extend({
           encAddress,
         } = prevDocument
 
-        if (fiatAmount > parseFloat(prevDocument.encFiatAmount)) {
+        // if (fiatAmount >= parseFloat(prevDocument.encFiatAmount)) {
+        //   this.reqPayment()
+        //   return
+        // }
+
+        const prevFiatAmount = prevDocument.encFiatAmount
+
+        // Use original fiat conversion rate
+        const rate = parseFloat(prevFiatAmount) / parseFloat(encSatoshis)
+        console.log('rate :>> ', rate)
+
+        const refundFiatAmount = Math.round(
+          (prevFiatAmount * 100 - fiatAmount * 100) / 100
+        )
+        const refundSatoshis = Math.round(refundFiatAmount / rate)
+        console.log('refundSatoshis :>> ', refundSatoshis)
+
+        // Payment Request amount in satoshis
+        const satoshis = encSatoshis - refundSatoshis
+        console.log('satoshis :>> ', satoshis)
+
+        // Check how much was already paid, then open dialog to request the difference or go on to send a partial refund
+        const summary = await this.getAddressSummary(encAddress)
+        if (summary.totalBalanceSat < satoshis) {
           this.reqPayment()
           return
         }
 
-        const prevFiatAmount = prevDocument.encFiatAmount
-        // Use original fiat conversion rate
-        const rate = parseFloat(prevFiatAmount) / parseFloat(encSatoshis)
-        console.log('rate :>> ', rate)
-        const refundSatoshis = Math.floor((prevFiatAmount - fiatAmount) / rate)
-        console.log('refundSatoshis :>> ', refundSatoshis)
-        const satoshis = encSatoshis - refundSatoshis
-        console.log('satoshis :>> ', satoshis)
+        this.$store.commit('showSnackbar', {
+          text: `Refunding ${refundFiatAmount} ${encFiatSymbol} to ${requesteeUserName}`,
+          color: 'blue',
+        })
 
         await this.requestPayment({
           requesteeUserId,
@@ -450,9 +469,26 @@ export default Vue.extend({
       }
     },
     async cancelRequest() {
-      const { document, cancelPaymentRequest, $router } = this
+      const { document, prevDocument, requestPayment, $router } = this
+      let cancelDocument
 
-      await cancelPaymentRequest(document)
+      // Roll back to previous request or set satoshis to 0 if this is the root request
+      if (prevDocument.encSatoshis) {
+        cancelDocument = prevDocument
+        cancelDocument.satoshis = prevDocument.encSatoshis
+        cancelDocument.fiatAmount = prevDocument.encFiatAmount
+        cancelDocument.fiatSymbol = prevDocument.encFiatSymbol
+        cancelDocument.address = prevDocument.encAddress
+      } else {
+        cancelDocument = document
+        cancelDocument.satoshis = 0
+        cancelDocument.fiatAmount = 0
+        cancelDocument.address = document.encAddress
+        cancelDocument.fiatSymbol = document.encFiatSymbol
+      }
+
+      console.log('cancel document :>> ', cancelDocument)
+      await requestPayment(cancelDocument)
 
       $router.push('/')
     },

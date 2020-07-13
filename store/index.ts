@@ -13,12 +13,19 @@ const timestamp = () => Math.floor(Date.now() / 1000)
 let client: any
 
 const getInitState = (): any => ({
+  // mnemonic:
+  //   'grow lady mule dizzy resource allow mother civil tunnel patient hazard cushion',
+  // identityId: 'B34j8pPUinnYbyWC6YAaL7viGexGmcbQdJ5SvPKqiH2Q',
+  // name: {
+  //   label: 'DashDonuts',
+  //   docId: '7cgbnAfPS8ySvTrNJgy64AWsJdwkXESk8CspfCBm7uyN',
+  // },
   mnemonic:
-    'grow lady mule dizzy resource allow mother civil tunnel patient hazard cushion',
-  identityId: 'B34j8pPUinnYbyWC6YAaL7viGexGmcbQdJ5SvPKqiH2Q',
+    'immense grief fame possible peasant reject cluster during cruel direct baby vehicle',
+  identityId: 'ByGiasySm3qivE5Wr6erLnddjr6YgC3ivgeVYSNLt1cA',
   name: {
-    label: 'DashDonuts',
-    docId: '7cgbnAfPS8ySvTrNJgy64AWsJdwkXESk8CspfCBm7uyN',
+    label: 'Crispy',
+    docId: 'DMp4ncegCsMVxBCk4yBBwKJfksRWKbo71Wq1TgTWJnT1',
   },
   isClientError: false,
   clientErrorMsg: '',
@@ -200,16 +207,16 @@ export const actions: ActionTree<RootState, RootState> = {
       console.error('Something went wrong:', e)
     }
   },
-  async cancelPaymentRequest({ dispatch }, requestDocument) {
-    console.log('cancelling requestDocument :>> ', requestDocument)
+  // async cancelPaymentRequest({ dispatch }, requestDocument) {
+  //   console.log('cancelling requestDocument :>> ', requestDocument)
 
-    // We're using satoshis === 0 to detect a cancelled request
-    requestDocument.satoshis = 0
+  //   // We're using satoshis === 0 to detect a cancelled request
+  //   requestDocument.satoshis = 0
 
-    const document = await dispatch('requestPayment', requestDocument)
+  //   const document = await dispatch('requestPayment', requestDocument)
 
-    console.log('cancelled document :>> ', document)
-  },
+  //   console.log('cancelled document :>> ', document)
+  // },
   async refundPaymentRequest(
     { commit, dispatch },
     { requestDocument, satoshis = undefined }
@@ -515,6 +522,7 @@ export const actions: ActionTree<RootState, RootState> = {
         if (requestedSatoshis === 0 && summary.totalTxAppearances === 0) {
           status = 'Cancelled'
         } else if (
+          requestedSatoshis === 0 &&
           summary.totalBalanceSat === 0 &&
           summary.totalTxAppearances > 1
         ) {
@@ -526,15 +534,12 @@ export const actions: ActionTree<RootState, RootState> = {
           status = 'Pending'
         }
         // TODO once deductFee is fixed, should be 0
-        else if (requestedSatoshis - summary.totalBalanceSat < 1000) {
+        else if (Math.abs(requestedSatoshis - summary.totalBalanceSat) < 1000) {
           status = 'Paid'
           // if (summary.txAppearances > 1) status = 'Amended'
         } else if (summary.totalBalanceSat > requestedSatoshis) {
           status = 'Overpaid'
-        } else if (
-          summary.totalBalanceSat < requestedSatoshis &&
-          summary.totalBalanceSat > 0
-        ) {
+        } else if (summary.totalBalanceSat < requestedSatoshis) {
           status = 'Underpaid'
         }
 

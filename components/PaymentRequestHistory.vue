@@ -126,6 +126,12 @@ export default Vue.extend({
       if (status === 'Pending') {
         return ['Amend', 'Cancel']
       }
+      if (status === 'Underpaid') {
+        return ['Amend']
+      }
+      if (status === 'Overpaid') {
+        return ['Refund']
+      }
       if (status === 'Paid') {
         return ['Refund', 'Amend']
       }
@@ -140,11 +146,21 @@ export default Vue.extend({
       console.log('exec option', option)
       if (option === 'Cancel') {
         const requestDocument = this.paymentRequests[idx].docs[0]
+
         this.$store.commit('showSnackbar', {
           text: `Cancelling ${requestDocument.refId}`,
           color: 'blue',
         })
-        await this.cancelPaymentRequest(requestDocument)
+
+        const cancelDocument: any = requestDocument
+        cancelDocument.satoshis = 0
+        cancelDocument.fiatAmount = 0
+        cancelDocument.address = requestDocument.encAddress
+        cancelDocument.fiatSymbol = requestDocument.encFiatSymbol
+
+        console.log('cancel document :>> ', cancelDocument)
+        await this.requestPayment(cancelDocument)
+
         this.$store.commit('showSnackbar', {
           text: `Cancelled PaymentRequest ${requestDocument.refId}`,
           color: 'success',
