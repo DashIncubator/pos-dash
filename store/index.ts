@@ -21,11 +21,11 @@ const getInitState = (): any => ({
   //   docId: '7cgbnAfPS8ySvTrNJgy64AWsJdwkXESk8CspfCBm7uyN',
   // },
   mnemonic:
-    'immense grief fame possible peasant reject cluster during cruel direct baby vehicle',
-  identityId: 'ByGiasySm3qivE5Wr6erLnddjr6YgC3ivgeVYSNLt1cA',
+    'remember crunch wire wreck cat now flag animal riot above game swarm',
+  identityId: '5c9SQAXcj9bBsoPX2RicaY5A5RYy3Xo4YsK8fhPNDamW',
   name: {
-    label: 'Crispy',
-    docId: 'DMp4ncegCsMVxBCk4yBBwKJfksRWKbo71Wq1TgTWJnT1',
+    label: 'DashyDonuts',
+    docId: 'A7JweSU9df2v5f2UWgF5y1n6wqmjkMeKB5Wh9JtBr9qW',
   },
   isClientError: false,
   clientErrorMsg: '',
@@ -62,6 +62,7 @@ export const mutations: MutationTree<RootState> = {
     state.pos.refId = POSOpts.refId
     state.pos.fiatAmount = POSOpts.fiatAmount
     state.pos.mode = POSOpts.mode
+    state.pos.status = POSOpts.status
     state.pos.prevDocument = { ...POSOpts.prevDocument }
   },
   resetPOSOptions: (state) => {
@@ -71,6 +72,7 @@ export const mutations: MutationTree<RootState> = {
     state.pos.refId = ''
     state.pos.fiatAmount = 0
     state.pos.mode = 'newSale'
+    state.pos.status = ''
     state.pos.prevDocument = {}
   },
   setClientWalletSynced: (state, isSynced) => {
@@ -172,7 +174,7 @@ export const actions: ActionTree<RootState, RootState> = {
       },
       apps: {
         PaymentRequest: {
-          contractId: '4NLLp1Fs8bgz6LwUXQbzQH11ugZv7z1kca1heBZoeWca',
+          contractId: 'QXPcMqhdzx2YdRqTZc1g1KRu3TTCodFaTy4HHFfKJRQ',
         },
       },
     })
@@ -552,6 +554,9 @@ export const actions: ActionTree<RootState, RootState> = {
       })
     )
     console.log('paymentRequestsWithUTXOs :>> ', paymentRequestsWithUTXOs)
+    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
+    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
+    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
     return paymentRequestsWithUTXOs
   },
   async queryDocuments(

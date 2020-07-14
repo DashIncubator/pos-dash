@@ -12,7 +12,7 @@
             <th class="text-left">Amount</th>
             <th class="text-left">Status</th>
             <th class="text-left">Actions</th>
-            <th class="text-left">Info</th>
+            <!-- <th class="text-left">Info</th> -->
           </tr>
         </thead>
         <tbody>
@@ -47,7 +47,7 @@
                 {{ option }}
               </v-btn>
             </td>
-            <td>{{ info(idx) }}</td>
+            <!-- <td>{{ info(idx) }}</td> -->
           </tr>
         </tbody>
       </template>
@@ -208,7 +208,12 @@ export default Vue.extend({
           encFiatAmount,
         } = this.paymentRequests[idx].docs[0]
 
-        const prevDocument = this.paymentRequests[idx].docs[0]
+        const { status } = this.paymentRequests[idx]
+
+        // encFiatAmount === 0 means cancelled, we want the latest doc with PR values:W
+        const prevDocument = this.paymentRequests[idx].docs.filter(
+          (doc: any) => doc.encFiatAmount !== '0'
+        )[0]
 
         const POSOpts = {
           refId,
@@ -217,6 +222,7 @@ export default Vue.extend({
           fiatAmount: encFiatAmount,
           prevDocument,
           mode: option,
+          status,
         }
 
         this.$store.commit('setPOSOptions', POSOpts)

@@ -403,9 +403,9 @@ export default Vue.extend({
         console.log('rate :>> ', rate)
 
         const refundFiatAmount = Math.round(
-          (prevFiatAmount * 100 - fiatAmount * 100) / 100
+          (parseFloat(prevFiatAmount) * 100 - fiatAmount * 100) / 100
         )
-        const refundSatoshis = Math.round(refundFiatAmount / rate)
+        const refundSatoshis = Math.round((refundFiatAmount * 100) / rate) / 100
         console.log('refundSatoshis :>> ', refundSatoshis)
 
         // Payment Request amount in satoshis
@@ -414,11 +414,12 @@ export default Vue.extend({
 
         // Check how much was already paid, then open dialog to request the difference or go on to send a partial refund
         const summary = await this.getAddressSummary(encAddress)
-        if (summary.totalBalanceSat < satoshis) {
+        console.log('summary :>> ', summary)
+        if (summary.totalBalanceSat <= satoshis) {
           this.reqPayment()
           return
         }
-
+        debugger
         this.$store.commit('showSnackbar', {
           text: `Refunding ${refundFiatAmount} ${encFiatSymbol} to ${requesteeUserName}`,
           color: 'blue',
