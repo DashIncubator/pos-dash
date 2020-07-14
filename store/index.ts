@@ -554,14 +554,6 @@ export const actions: ActionTree<RootState, RootState> = {
       })
     )
     console.log('paymentRequestsWithUTXOs :>> ', paymentRequestsWithUTXOs)
-    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
-    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
-    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
-    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
-    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
-    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
-    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
-    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
     return paymentRequestsWithUTXOs
   },
   async queryDocuments(
