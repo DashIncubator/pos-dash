@@ -294,6 +294,7 @@ export default Vue.extend({
     const data: {
       mode: string
       memo: string
+      status: string
       prevDocument: any
       fiatAmount: number
       refId: string
@@ -305,6 +306,7 @@ export default Vue.extend({
       document: any
     } = {
       mode: 'newSale',
+      status: '',
       memo: '',
       prevDocument: {},
       fiatAmount: 0,
@@ -335,10 +337,15 @@ export default Vue.extend({
     },
     // eslint-disable-next-line vue/return-in-computed-property
     confirmCaption() {
-      const fiatDifference =
+      let fiatDifference =
         Math.round(
           this.fiatAmount * 100 - this.prevDocument?.encFiatAmount * 100
         ) / 100
+
+      // If status is fully refunded, use full fiatAmount in PaymentRequest
+      if (this.status === 'Refunded')
+        fiatDifference = Math.round(this.fiatAmount * 100) / 100
+
       if (fiatDifference < 0) {
         // @ts-ignore
         return {
@@ -367,6 +374,7 @@ export default Vue.extend({
     this.prevDocument = this.$store.state.pos.prevDocument
     this.fiatAmount = this.$store.state.pos.fiatAmount
     this.refId = this.$store.state.pos.refId
+    this.status = this.$store.state.pos.status
     console.log(this.customer, this.fiatAmount, this.refId)
     this.$store.commit('resetPOSOptions')
   },
@@ -402,10 +410,9 @@ export default Vue.extend({
         const rate = parseFloat(prevFiatAmount) / parseFloat(encSatoshis)
         console.log('rate :>> ', rate)
 
-        const refundFiatAmount = Math.round(
-          (parseFloat(prevFiatAmount) * 100 - fiatAmount * 100) / 100
-        )
-        const refundSatoshis = Math.round((refundFiatAmount * 100) / rate) / 100
+        const refundFiatAmount =
+          Math.round(parseFloat(prevFiatAmount) * 100 - fiatAmount * 100) / 100
+        const refundSatoshis = Math.floor(refundFiatAmount / rate)
         console.log('refundSatoshis :>> ', refundSatoshis)
 
         // Payment Request amount in satoshis
@@ -415,11 +422,12 @@ export default Vue.extend({
         // Check how much was already paid, then open dialog to request the difference or go on to send a partial refund
         const summary = await this.getAddressSummary(encAddress)
         console.log('summary :>> ', summary)
+
         if (summary.totalBalanceSat <= satoshis) {
           this.reqPayment()
           return
         }
-        debugger
+
         this.$store.commit('showSnackbar', {
           text: `Refunding ${refundFiatAmount} ${encFiatSymbol} to ${requesteeUserName}`,
           color: 'blue',

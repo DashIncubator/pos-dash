@@ -174,7 +174,7 @@ export const actions: ActionTree<RootState, RootState> = {
       },
       apps: {
         PaymentRequest: {
-          contractId: 'QXPcMqhdzx2YdRqTZc1g1KRu3TTCodFaTy4HHFfKJRQ',
+          contractId: '9uzEu3KLVQNttzqDNK46pCCCMwB2YDyxK1FDUNTpqYRH',
         },
       },
     })
@@ -554,6 +554,11 @@ export const actions: ActionTree<RootState, RootState> = {
       })
     )
     console.log('paymentRequestsWithUTXOs :>> ', paymentRequestsWithUTXOs)
+    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
+    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
+    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
+    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
+    paymentRequestsWithUTXOs.pop() // TODO remove after demo video
     paymentRequestsWithUTXOs.pop() // TODO remove after demo video
     paymentRequestsWithUTXOs.pop() // TODO remove after demo video
     paymentRequestsWithUTXOs.pop() // TODO remove after demo video
