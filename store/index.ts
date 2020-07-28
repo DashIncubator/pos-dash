@@ -5,27 +5,18 @@ import dashcore from '@dashevo/dashcore-lib'
 // const { Address, Unit } = dashcore;
 const { Unit } = dashcore
 
-// AliceBuysDonuts
-// panic wine useful travel purse dentist increase twenty aerobic anxiety milk glide
 const DashJS = require('dash')
 
 const timestamp = () => Math.floor(Date.now() / 1000)
 let client: any
 
 const getInitState = (): any => ({
-  // mnemonic:
-  //   'grow lady mule dizzy resource allow mother civil tunnel patient hazard cushion',
-  // identityId: 'B34j8pPUinnYbyWC6YAaL7viGexGmcbQdJ5SvPKqiH2Q',
-  // name: {
-  //   label: 'DashDonuts',
-  //   docId: '7cgbnAfPS8ySvTrNJgy64AWsJdwkXESk8CspfCBm7uyN',
-  // },
   mnemonic:
-    'remember crunch wire wreck cat now flag animal riot above game swarm',
-  identityId: '5c9SQAXcj9bBsoPX2RicaY5A5RYy3Xo4YsK8fhPNDamW',
+    'polar valve life beyond camera step erupt festival drama few body recall',
+  identityId: '8j4wiCGuBMSYH3NDkfrhvJ44MqLYrfTBuyvHLoNaM3mX',
   name: {
-    label: 'DashyDonuts',
-    docId: 'A7JweSU9df2v5f2UWgF5y1n6wqmjkMeKB5Wh9JtBr9qW',
+    label: 'DashDonuts',
+    docId: '8y5TPw1yq9Ypp81vqMitLJFjMQUYXeKQ12jmhq7rNCkE',
   },
   isClientError: false,
   clientErrorMsg: '',
@@ -169,12 +160,13 @@ export const actions: ActionTree<RootState, RootState> = {
     commit('setClientWalletSynced', false)
     console.log('Initializing Dash.Client with mnemonic: ', state.mnemonic)
     client = new DashJS.Client({
+      network: 'evonet',
       wallet: {
         mnemonic: state.mnemonic,
       },
       apps: {
         PaymentRequest: {
-          contractId: '9uzEu3KLVQNttzqDNK46pCCCMwB2YDyxK1FDUNTpqYRH',
+          contractId: 'BJazojioGy5GryCfgCNskD6crCEbfrP7YzEj7CydxKEi',
         },
       },
     })
@@ -588,14 +580,15 @@ export const actions: ActionTree<RootState, RootState> = {
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getUTXO({ state }, address: string) {
-    const DAPIclient = await client.getDAPIClient()
-    const UTXO = await DAPIclient.getUTXO(address)
+    const DAPIclient = client.getDAPIClient()
+    console.log('DAPIclient :>> ', DAPIclient)
+    const UTXO = await DAPIclient.core.getUTXO(address)
     return UTXO
   },
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   async getAddressSummary({ state }, address: string) {
-    const DAPIclient = await client.getDAPIClient()
-    const summary = await DAPIclient.getAddressSummary(address)
+    const DAPIclient = client.getDAPIClient()
+    const summary = await DAPIclient.core.getAddressSummary(address)
 
     summary.totalBalanceSat = summary.balanceSat + summary.unconfirmedBalanceSat
 

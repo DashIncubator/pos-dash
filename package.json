@@ -24,7 +24,7 @@
     "@nuxt/typescript-runtime": "^0.4.10",
     "@nuxtjs/axios": "^5.11.0",
     "@nuxtjs/pwa": "^3.0.0-beta.20",
-    "dash": "github:dashameter/DashJS#getbyid",
+    "dash": "github:dashameter/dashjs#dpp14",
     "dash-secure-message": "^1.0.0",
     "fs": "0.0.1-security",
     "nuxt": "^2.13.1",
