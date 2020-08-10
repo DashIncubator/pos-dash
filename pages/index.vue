@@ -1,5 +1,17 @@
 <template>
   <div>
+    <div
+      class="text-h3 mb-2 ml-2 pa-2"
+      style="
+        font-size: 1.5rem;
+        color: #787878;
+                text-shadow: 2px 2px 4px #78787840;
+        font-family: Montserrat, sans-serif !important;
+
+      "
+    >
+      Dash InStore
+    </div>
     <v-banner sticky outlined style="background: white;">
       <v-row>
         <v-col style="max-width: 150px;">
@@ -11,7 +23,10 @@
         </v-col>
         <v-col
           ><v-card elevation="0"
-            ><v-card-title> {{ $store.state.name.label }} </v-card-title>
+            ><v-card-title> Store: {{ $store.state.name.label }} </v-card-title>
+            <v-card-subtitle>
+              <nuxt-link to="/">Store Settings</nuxt-link>
+            </v-card-subtitle>
             <v-card-text
               >Ask the customer to scan the QR Code to initiate a Payment
               Request</v-card-text

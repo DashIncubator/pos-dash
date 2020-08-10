@@ -1,9 +1,15 @@
 <template>
   <div>
-    <v-btn fab class="mt-10" small @click="refreshPaymentRequests"
-      ><v-icon>mdi-refresh </v-icon></v-btn
+    <div
+      class="text-h5 mt-10 ml-2 pa-2"
+      style="font-family: 'Montserrat', sans-serif; color: #787878;"
     >
-    <v-simple-table class="mt-10">
+      Recent Payments
+      <v-btn fab class="ml-4 mt-n1" small @click="refreshPaymentRequests"
+        ><v-icon>mdi-refresh </v-icon></v-btn
+      >
+    </div>
+    <v-simple-table class="mt-4">
       <template v-slot:default>
         <thead>
           <tr>

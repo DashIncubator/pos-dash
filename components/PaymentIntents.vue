@@ -23,7 +23,7 @@
           dark
           color="green"
           @click="requestFromUserId(intent.requesteeUserId)"
-          >Request Money</v-btn
+          >Create Order</v-btn
         >
         <v-btn text color="red" @click="dismissIntent(intent.$id)"
           >Dismiss</v-btn

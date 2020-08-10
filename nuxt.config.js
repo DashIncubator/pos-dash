@@ -11,9 +11,9 @@ export default {
   },
   pwa: {
     manifest: {
-      name: 'POS',
-      short_name: 'POS',
-      description: 'Dash Evolution POS Demo App',
+      name: 'InStore',
+      short_name: 'InStore',
+      description: 'Dash Evolution InStore Demo App',
       lang: 'en',
       background_color: '#008de4',
       theme_color: '#787878',
@@ -26,8 +26,8 @@ export default {
    ** See https://nuxtjs.org/api/configuration-head
    */
   head: {
-    titleTemplate: '%s - ' + 'POS',
-    title: 'POS',
+    titleTemplate: '%s - ' + 'InStore',
+    title: 'InStore',
     meta: [
       { charset: 'utf-8' },
       { name: 'viewport', content: 'width=device-width, initial-scale=1' },
@@ -37,7 +37,14 @@ export default {
         content: process.env.npm_package_description || '',
       },
     ],
-    link: [{ rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' }],
+    link: [
+      { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+      {
+        rel: 'stylesheet',
+        href:
+          'https://fonts.googleapis.com/css2?family=Montserrat&family=Open+Sans&family=Roboto&display=swap',
+      },
+    ],
   },
   /*
    ** Global CSS

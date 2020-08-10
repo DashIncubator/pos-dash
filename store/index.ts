@@ -166,7 +166,7 @@ export const actions: ActionTree<RootState, RootState> = {
       },
       apps: {
         PaymentRequest: {
-          contractId: 'BJazojioGy5GryCfgCNskD6crCEbfrP7YzEj7CydxKEi',
+          contractId: '61Qk7Ev2eU9T5e2WauLvY2hMZMWe5aXYsGADoKmRhLJ3',
         },
       },
     })
@@ -316,6 +316,7 @@ export const actions: ActionTree<RootState, RootState> = {
     } catch (e) {
       commit('showSnackbar', { text: e.message })
       console.error('Something went wrong:', e)
+      console.log(JSON.parse(e.metadata.get('errors')[0]))
     }
   },
   async requestFiat(

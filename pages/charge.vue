@@ -3,9 +3,12 @@
     <v-alert v-if="mode === 'Amend'" color="blue" outlined=""
       >Amending Request: {{ refId }}</v-alert
     >
+
+    <!-- this is not the order number, this is the intent hash / refId for referencing paymentintents, this has been changed for the video talking point -->
     <v-alert v-if="mode === 'Intent'" color="green" outlined=""
-      >New Sale for Intent: {{ refId }}</v-alert
+      >Order #{{ refId }}</v-alert
     >
+
     <v-alert v-if="mode === 'newSale'" color="green" outlined=""
       >New Sale</v-alert
     >
